@@ -13,6 +13,10 @@
 		B68EE2DF20BD5B0C008C2FC5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B68EE2DD20BD5B0C008C2FC5 /* Main.storyboard */; };
 		B68EE2E120BD5B22008C2FC5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B68EE2E020BD5B22008C2FC5 /* Assets.xcassets */; };
 		B68EE2E420BD5B22008C2FC5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B68EE2E220BD5B22008C2FC5 /* LaunchScreen.storyboard */; };
+		B68EE2ED20BD5EA6008C2FC5 /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2EB20BD5EA5008C2FC5 /* UIColor+Hex.swift */; };
+		B68EE2EE20BD5EA6008C2FC5 /* UIColor+FlatColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2EC20BD5EA6008C2FC5 /* UIColor+FlatColors.swift */; };
+		B68EE2F020BD5EBE008C2FC5 /* ConnectionCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2EF20BD5EBD008C2FC5 /* ConnectionCheck.swift */; };
+		B68EE2F220BD5FBB008C2FC5 /* EventsTableCells.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2F120BD5FBB008C2FC5 /* EventsTableCells.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +28,10 @@
 		B68EE2E020BD5B22008C2FC5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B68EE2E320BD5B22008C2FC5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B68EE2E520BD5B23008C2FC5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B68EE2EB20BD5EA5008C2FC5 /* UIColor+Hex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
+		B68EE2EC20BD5EA6008C2FC5 /* UIColor+FlatColors.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+FlatColors.swift"; sourceTree = "<group>"; };
+		B68EE2EF20BD5EBD008C2FC5 /* ConnectionCheck.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectionCheck.swift; sourceTree = "<group>"; };
+		B68EE2F120BD5FBB008C2FC5 /* EventsTableCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsTableCells.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,7 +67,11 @@
 				B68EE2D720BD5B0B008C2FC5 /* AppDelegate.swift */,
 				B68EE2D920BD5B0B008C2FC5 /* FirstViewController.swift */,
 				B68EE2DB20BD5B0B008C2FC5 /* SecondViewController.swift */,
+				B68EE2EC20BD5EA6008C2FC5 /* UIColor+FlatColors.swift */,
+				B68EE2EB20BD5EA5008C2FC5 /* UIColor+Hex.swift */,
+				B68EE2EF20BD5EBD008C2FC5 /* ConnectionCheck.swift */,
 				B68EE2DD20BD5B0C008C2FC5 /* Main.storyboard */,
+				B68EE2F120BD5FBB008C2FC5 /* EventsTableCells.swift */,
 				B68EE2E020BD5B22008C2FC5 /* Assets.xcassets */,
 				B68EE2E220BD5B22008C2FC5 /* LaunchScreen.storyboard */,
 				B68EE2E520BD5B23008C2FC5 /* Info.plist */,
@@ -138,7 +150,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B68EE2F020BD5EBE008C2FC5 /* ConnectionCheck.swift in Sources */,
 				B68EE2DC20BD5B0B008C2FC5 /* SecondViewController.swift in Sources */,
+				B68EE2EE20BD5EA6008C2FC5 /* UIColor+FlatColors.swift in Sources */,
+				B68EE2ED20BD5EA6008C2FC5 /* UIColor+Hex.swift in Sources */,
+				B68EE2F220BD5FBB008C2FC5 /* EventsTableCells.swift in Sources */,
 				B68EE2D820BD5B0B008C2FC5 /* AppDelegate.swift in Sources */,
 				B68EE2DA20BD5B0B008C2FC5 /* FirstViewController.swift in Sources */,
 			);
@@ -206,7 +222,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -217,12 +233,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
 			name = Debug;
 		};
@@ -271,7 +287,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -287,6 +303,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = HUS279SULR;
 				INFOPLIST_FILE = JumpingTracker/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -294,7 +311,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.PWS-apps.equestrian.JumpingTracker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -305,6 +322,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = HUS279SULR;
 				INFOPLIST_FILE = JumpingTracker/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -312,7 +330,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.PWS-apps.equestrian.JumpingTracker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
