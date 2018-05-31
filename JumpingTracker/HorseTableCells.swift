@@ -1,29 +1,26 @@
 //
-//  EventsTableCells.swift
+//  HorseTableCells.swift
 //  JumpingTracker
 //
-//  Created by Pieter Stragier on 29/05/2018.
+//  Created by Pieter Stragier on 31/05/2018.
 //  Copyright © 2018 Pieter Stragier. All rights reserved.
 //
 
 import UIKit
 
-class EventsTableCell: UITableViewCell {
+class HorseTableCell: UITableViewCell {
     
     // MARK: - Properties
     
-    static let reuseIdentifier = "EventsTableCell"
+    static let reuseIdentifier = "HorseTableCell"
     
     // MARK: -
     
-    @IBOutlet weak var event: UILabel!
-    @IBOutlet weak var organisation: UILabel!
-    @IBOutlet weak var date: UILabel!
-    @IBOutlet weak var hour: UILabel!
-    @IBOutlet weak var locality: UILabel!
-    @IBOutlet weak var country: UILabel!
     @IBOutlet weak var BGView: UIView!
-    
+    @IBOutlet weak var horseName: UILabel!
+    @IBOutlet weak var studbook: UILabel!
+    @IBOutlet weak var horseOwner: UILabel!
+    @IBOutlet weak var birthDay: UILabel!
     
     // MARK: - Initialization
     
@@ -37,3 +34,4 @@ class EventsTableCell: UITableViewCell {
     }
     
 }
+
