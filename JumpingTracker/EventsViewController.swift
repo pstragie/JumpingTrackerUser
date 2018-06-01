@@ -54,7 +54,7 @@ class EventsViewController: UIViewController {
     }
 
     func setupLayout() {
-        titleLabel.layer.cornerRadius = 5
+        titleLabel.layer.cornerRadius = 0
         titleLabel.layer.masksToBounds = true
         titleLabel.layer.borderWidth = 2
         titleLabel.layer.borderColor = UIColor.FlatColor.Blue.Denim.cgColor
@@ -104,6 +104,7 @@ extension EventsViewController: UITableViewDataSource, UITableViewDelegate {
             //let sessionDelegate = self
             let session = URLSession(configuration: configuration, delegate: self, delegateQueue: OperationQueue.main)
             let sessionTask = session.dataTask(with: request)
+            sessionTask.cancel()
             sessionTask.resume()
             //let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
     
@@ -162,7 +163,7 @@ extension EventsViewController: UITableViewDataSource, UITableViewDelegate {
             fatalError("Unexpected Index Path")
         }
         cell.selectionStyle = .gray
-        cell.layer.cornerRadius = 10
+        cell.layer.cornerRadius = 0
         cell.layer.masksToBounds = true
         cell.layer.borderWidth = 0
         switch indexPath.section {
@@ -216,37 +217,33 @@ extension EventsViewController: URLSessionDelegate, URLSessionTaskDelegate, URLS
             //Decode retrieved data with JSONDecoder
             let eventsData = try JSONDecoder().decode([Events].self, from: data)
             
+            
             for event in eventsData {
+                var tempDict: Dictionary<String, String> = [:]
                 for eventT in event.title {
-                    self.eventTitle = eventT.value
+                    tempDict["title"] = eventT.value
                 }
                 for eventL in event.address {
-                    self.eventLocality = eventL.locality
+                    tempDict["locality"] = eventL.locality
                 }
                 for eventC in event.address {
-                    self.eventCountry = eventC.countryCode
+                    tempDict["country"] = eventC.countryCode
                 }
                 for eventD in event.date {
                     self.eventDate = self.sanitizeDateFromJson(eventD.value)
-                    self.eventHour = self.sanitizeHourFromJson(eventD.value)
+                    tempDict["date"] = self.sanitizeDateFromJson(eventD.value)
+                    tempDict["hour"] = self.sanitizeHourFromJson(eventD.value)
                 }
-                var tempDict: Dictionary<String, String> = [:]
-                tempDict["title"] = self.eventTitle
-                tempDict["locality"] = self.eventLocality
-                tempDict["country"] = self.eventCountry
-                tempDict["date"] = self.eventDate
-                tempDict["hour"] = self.eventHour
+                
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "dd-MM-yyyy"
                 let date = dateFormatter.date(from: self.eventDate)
                 
                 if date! > Date() {
                     print("upcoming")
-                    
                     self.upcomingEvents.append(tempDict)
                 } else {
                     print("passed")
-                    
                     self.passedEvents.append(tempDict)
                 }
                 print("upcoming events: \(self.upcomingEvents)")

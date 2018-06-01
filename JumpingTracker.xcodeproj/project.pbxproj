@@ -22,6 +22,8 @@
 		B68EE2FC20BF6077008C2FC5 /* StudbookMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2FB20BF6077008C2FC5 /* StudbookMode.swift */; };
 		B68EE2FE20BF6165008C2FC5 /* HorsesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */; };
 		B68EE30020BF64AB008C2FC5 /* HorseTableCells.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */; };
+		B68EE30220C02AC1008C2FC5 /* YearMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30120C02AC1008C2FC5 /* YearMode.swift */; };
+		B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 		B68EE2FB20BF6077008C2FC5 /* StudbookMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudbookMode.swift; sourceTree = "<group>"; };
 		B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorsesViewController.swift; sourceTree = "<group>"; };
 		B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorseTableCells.swift; sourceTree = "<group>"; };
+		B68EE30120C02AC1008C2FC5 /* YearMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearMode.swift; sourceTree = "<group>"; };
+		B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,9 +82,11 @@
 				B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */,
 				B68EE2DB20BD5B0B008C2FC5 /* EventsViewController.swift */,
 				B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */,
+				B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */,
 				B68EE2F320BD6E7F008C2FC5 /* EventMode.swift */,
 				B68EE2F920BF5B37008C2FC5 /* HorseMode.swift */,
 				B68EE2FB20BF6077008C2FC5 /* StudbookMode.swift */,
+				B68EE30120C02AC1008C2FC5 /* YearMode.swift */,
 				B68EE2EC20BD5EA6008C2FC5 /* UIColor+FlatColors.swift */,
 				B68EE2EB20BD5EA5008C2FC5 /* UIColor+Hex.swift */,
 				B68EE2EF20BD5EBD008C2FC5 /* ConnectionCheck.swift */,
@@ -166,6 +172,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				B68EE2F020BD5EBE008C2FC5 /* ConnectionCheck.swift in Sources */,
+				B68EE30220C02AC1008C2FC5 /* YearMode.swift in Sources */,
+				B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */,
 				B68EE2F420BD6E7F008C2FC5 /* EventMode.swift in Sources */,
 				B68EE2DC20BD5B0B008C2FC5 /* EventsViewController.swift in Sources */,
 				B68EE2EE20BD5EA6008C2FC5 /* UIColor+FlatColors.swift in Sources */,

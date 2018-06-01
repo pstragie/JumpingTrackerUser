@@ -26,7 +26,7 @@ class HorseTableCell: UITableViewCell {
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        BGView.layer.cornerRadius = 10
+        BGView.layer.cornerRadius = 5
         BGView.layer.masksToBounds = true
         BGView.layer.borderWidth = 1
         BGView.layer.borderColor = UIColor.FlatColor.Blue.Denim.cgColor
