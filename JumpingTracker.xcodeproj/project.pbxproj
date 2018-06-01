@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		144E5C057E0A8B26AB60B713 /* libPods-JumpingTracker.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A44C3FA37843284B49D4756 /* libPods-JumpingTracker.a */; };
 		B68EE2D820BD5B0B008C2FC5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2D720BD5B0B008C2FC5 /* AppDelegate.swift */; };
 		B68EE2DA20BD5B0B008C2FC5 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */; };
 		B68EE2DC20BD5B0B008C2FC5 /* EventsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2DB20BD5B0B008C2FC5 /* EventsViewController.swift */; };
@@ -27,6 +28,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2A44C3FA37843284B49D4756 /* libPods-JumpingTracker.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-JumpingTracker.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		72394C6F6C6DAF05D8EDF212 /* Pods-JumpingTracker.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JumpingTracker.debug.xcconfig"; path = "Pods/Target Support Files/Pods-JumpingTracker/Pods-JumpingTracker.debug.xcconfig"; sourceTree = "<group>"; };
 		B68EE2D420BD5B0B008C2FC5 /* JumpingTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JumpingTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B68EE2D720BD5B0B008C2FC5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
@@ -46,6 +49,7 @@
 		B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorseTableCells.swift; sourceTree = "<group>"; };
 		B68EE30120C02AC1008C2FC5 /* YearMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearMode.swift; sourceTree = "<group>"; };
 		B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventsViewController.swift; sourceTree = "<group>"; };
+		ECA3DB9B5F8F20F4BD1CAB00 /* Pods-JumpingTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JumpingTracker.release.xcconfig"; path = "Pods/Target Support Files/Pods-JumpingTracker/Pods-JumpingTracker.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,17 +57,37 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				144E5C057E0A8B26AB60B713 /* libPods-JumpingTracker.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		11DC35AA738ECFD2B7940D2A /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				72394C6F6C6DAF05D8EDF212 /* Pods-JumpingTracker.debug.xcconfig */,
+				ECA3DB9B5F8F20F4BD1CAB00 /* Pods-JumpingTracker.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+		9AD35BE9C3189B103E12BCD6 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2A44C3FA37843284B49D4756 /* libPods-JumpingTracker.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		B68EE2CB20BD5B0B008C2FC5 = {
 			isa = PBXGroup;
 			children = (
 				B68EE2D620BD5B0B008C2FC5 /* JumpingTracker */,
 				B68EE2D520BD5B0B008C2FC5 /* Products */,
+				11DC35AA738ECFD2B7940D2A /* Pods */,
+				9AD35BE9C3189B103E12BCD6 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -107,6 +131,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B68EE2E820BD5B23008C2FC5 /* Build configuration list for PBXNativeTarget "JumpingTracker" */;
 			buildPhases = (
+				C62022E8C9E0844180147539 /* [CP] Check Pods Manifest.lock */,
 				B68EE2D020BD5B0B008C2FC5 /* Sources */,
 				B68EE2D120BD5B0B008C2FC5 /* Frameworks */,
 				B68EE2D220BD5B0B008C2FC5 /* Resources */,
@@ -165,6 +190,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C62022E8C9E0844180147539 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-JumpingTracker-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B68EE2D020BD5B0B008C2FC5 /* Sources */ = {
@@ -326,6 +372,7 @@
 		};
 		B68EE2E920BD5B23008C2FC5 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 72394C6F6C6DAF05D8EDF212 /* Pods-JumpingTracker.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -345,6 +392,7 @@
 		};
 		B68EE2EA20BD5B23008C2FC5 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = ECA3DB9B5F8F20F4BD1CAB00 /* Pods-JumpingTracker.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
