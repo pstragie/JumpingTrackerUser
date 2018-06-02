@@ -1,0 +1,85 @@
+
+Alamofire.request(urlString, method: .get, parameters: nil, encoding: JSONEncoding.default, headers: headers).validate().responseJSON { (response) in
+if response.result.value != nil {
+print("response: \(response)")
+}
+switch(response.result) {
+case .success(let value):
+let swiftyJSON = JSON(value)
+print(swiftyJSON)
+let name = swiftyJSON["uid"].stringValue
+print("UID = \(name)")
+break
+case .failure(let error):
+print("Request failed with error: \(error)")
+break
+}
+}
+
+Alamofire.request(urlString, method: .post, parameters: loginRequest, encoding: JSONEncoding.default, headers: nil).responseJSON { (response) in
+if response.result.value != nil {
+print("response: \(response)")
+}
+switch(response.result) {
+case .success(let value):
+let swiftyJSON = JSON(value)
+print(swiftyJSON)
+let name = swiftyJSON["uid"].stringValue
+print("UID = \(name)")
+break
+case .failure(let error):
+print("Request failed with error: \(error)")
+break
+}
+}
+
+Alamofire.request(urlString, method: .get).authenticate(user: “username”, password: “password”).responseJSON
+
+extension ExampleSnippets: URLSessionDelegate {
+func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+// We've got a URLAuthenticationChallenge - we simply trust the HTTPS server and we proceed
+print("didReceive challenge")
+print("challenge: \(challenge)")
+completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))
+}
+
+func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+// We've got an error
+if let err = error {
+print("Error: \(err.localizedDescription)")
+} else {
+print("Error. Giving up")
+}
+}
+}
+extension ExampleSnippets: URLSessionDataDelegate {
+func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didBecome streamTask: URLSessionStreamTask) {
+// The task became a stream task - start the task
+print("didBecome streamTask")
+streamTask.resume()
+}
+
+func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didBecome downloadTask: URLSessionDownloadTask) {
+// The task became a download task - start the task
+print("didBecome downloadTask")
+downloadTask.resume()
+}
+
+func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+// We've got the response body
+print("didReceive data")
+if let responseText = String(data: data, encoding: .utf8) {
+print(self.response ?? "no response")
+print("\nServer's response text")
+print(responseText)
+}
+do {
+print("do something with the data")
+
+} catch let error as NSError {
+print("Error parsing JSON: \(error.localizedDescription)")
+}
+self.session?.finishTasksAndInvalidate()
+}
+}
+

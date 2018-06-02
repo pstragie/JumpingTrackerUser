@@ -25,6 +25,7 @@
 		B68EE30020BF64AB008C2FC5 /* HorseTableCells.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */; };
 		B68EE30220C02AC1008C2FC5 /* YearMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30120C02AC1008C2FC5 /* YearMode.swift */; };
 		B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */; };
+		B68EE30820C20C6A008C2FC5 /* Snippets in Resources */ = {isa = PBXBuildFile; fileRef = B68EE30720C20C6A008C2FC5 /* Snippets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorseTableCells.swift; sourceTree = "<group>"; };
 		B68EE30120C02AC1008C2FC5 /* YearMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearMode.swift; sourceTree = "<group>"; };
 		B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventsViewController.swift; sourceTree = "<group>"; };
+		B68EE30720C20C6A008C2FC5 /* Snippets */ = {isa = PBXFileReference; lastKnownFileType = text; path = Snippets; sourceTree = "<group>"; };
 		ECA3DB9B5F8F20F4BD1CAB00 /* Pods-JumpingTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JumpingTracker.release.xcconfig"; path = "Pods/Target Support Files/Pods-JumpingTracker/Pods-JumpingTracker.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -104,6 +106,7 @@
 			children = (
 				B68EE2D720BD5B0B008C2FC5 /* AppDelegate.swift */,
 				B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */,
+				B68EE30720C20C6A008C2FC5 /* Snippets */,
 				B68EE2DB20BD5B0B008C2FC5 /* EventsViewController.swift */,
 				B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */,
 				B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */,
@@ -185,6 +188,7 @@
 			files = (
 				B68EE2E420BD5B22008C2FC5 /* LaunchScreen.storyboard in Resources */,
 				B68EE2E120BD5B22008C2FC5 /* Assets.xcassets in Resources */,
+				B68EE30820C20C6A008C2FC5 /* Snippets in Resources */,
 				B68EE2DF20BD5B0C008C2FC5 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

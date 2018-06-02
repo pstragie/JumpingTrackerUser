@@ -7,10 +7,21 @@
 //
 
 import UIKit
+import Foundation
+import Alamofire
+import SwiftyJSON
 
 class HomeViewController: UIViewController {
 
+    var token: String = ""
     let userDefault = UserDefaults.standard
+    let opQueue = OperationQueue()
+    var response: URLResponse?
+    var session: URLSession?
+    
+    var time: DispatchTime! {
+        return DispatchTime.now() + 1.0 // seconds
+    }
     // MARK: - Outlets
     
     @IBOutlet weak var welcomeLabel: UILabel!
@@ -89,9 +100,80 @@ class HomeViewController: UIViewController {
     // MARK: - verify account
     func verifyAccount() {
         print("verifying")
-        // Authenticate with server (OAuth 2.0?)
-        // Communicate with server to get user id etc.
-        // Store Name, user id, etc. in userDefault
+        if ConnectionCheck.isConnectedToNetwork() {
+            self.opQueue.isSuspended = true
+            // Authenticate with server (OAuth 2.0?)
+            // Communicate with server to get user id etc.
+            // Store Name, user id, etc. in userDefault
+            let username = userDefault.string(forKey: "Username") as Any
+            let password = userDefault.string(forKey: "Password") as Any
+            //let loginString = String(format: "%@:%@", username as! String, password as! String)
+            //let loginData = loginString.data(using: String.Encoding.utf8)!
+            let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
+            let base64Credentials = credentialData.base64EncodedString(options: [])
+            //let base64LoginString = loginData.base64EncodedString()
+            //let headers = ["Authorization": "Basic \(base64Credentials)"]
+            // create the request
+            let urlString = "https://jumpingtracker.com/rest/export/json/userinfo"
+            //guard let url = URL(string: urlString) else { return }
+            let loginRequest = ["user": username, "password": password]
+            Alamofire.request(urlString, method: .get).authenticate(user: username as! String, password: password as! String).responseJSON { (response) in
+                if response.result.value != nil {
+                    print("response: \(response)")
+                }
+                switch(response.result) {
+                case .success(let value):
+                    print("authenticate value: \(value)")
+                    let swiftyJSON = JSON(value)
+                    print(swiftyJSON)
+                    let name = swiftyJSON["uid"].stringValue
+                    print("UID = \(name)")
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    break
+                }
+            }
+            Alamofire.request("https://jumpingtracker.com/rest/session/token", method: .get, parameters: loginRequest, encoding: JSONEncoding.default, headers: nil).validate().responseString { (response) in
+                if response.result.value != nil {
+                    print("response: \(response)")
+                }
+                switch(response.result) {
+                case .success(let value):
+                    print("get value: \(value)")
+                    self.token = value
+                    break
+                case .failure(let error):
+                    print("Request to get failed with error: \(error)")
+                    break
+                }
+            }
+        
+            Alamofire.request(urlString, method: .post, parameters: loginRequest, encoding: JSONEncoding.default, headers: nil).validate().responseJSON { (response) in
+                if response.result.value != nil {
+                    print("response: \(response)")
+                }
+                switch(response.result) {
+                case .success(let value):
+                    print("post value: \(value)")
+                    let swiftyJSON = JSON(value)
+                    print(swiftyJSON)
+                    let name = swiftyJSON["uid"].stringValue
+                    print("UID = \(name)")
+                    break
+                case .failure(let error):
+                    print("Request to post failed with error: \(error)")
+                    break
+                }
+            }
+            // Open the operations queue after 1 second
+            DispatchQueue.main.asyncAfter(deadline: self.time, execute: {[weak self] in
+                print("Opening the OperationQueue")
+                self?.opQueue.isSuspended = false
+            })
+        } else {
+            print("No internet Connection")
+        }
     }
     
     
@@ -142,4 +224,6 @@ class HomeViewController: UIViewController {
         }
     }
 }
+
+
 
