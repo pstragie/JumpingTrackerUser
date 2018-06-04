@@ -15,6 +15,7 @@ struct Horses: Decodable {
     var owner: [Owner]?
     var birthday: [Birthday]?
     var deceased: [Deceased]?
+    var discipline: [Discipline]?
     
     enum CodingKeys: String, CodingKey {
         case name
@@ -22,6 +23,7 @@ struct Horses: Decodable {
         case owner = "field_current_owner"
         case birthday = "field_birth_year"
         case deceased = "field_deceased"
+        case discipline = "field_discipline"
     }
     
     struct Name: Codable {
@@ -58,6 +60,14 @@ struct Horses: Decodable {
         
         enum CodingKeys: String, CodingKey {
             case deceased = "value"
+        }
+    }
+    
+    struct Discipline: Codable {
+        var id: Int
+        
+        enum CodingKeys: String, CodingKey {
+            case id = "target_id"
         }
     }
 }

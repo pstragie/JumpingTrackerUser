@@ -20,6 +20,13 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="NRD-i1-Ca0">
+                                <rect key="frame" x="167" y="386" width="40" height="40"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="40" id="fsA-8n-06V"/>
+                                    <constraint firstAttribute="height" constant="40" id="jvM-Hd-oV5"/>
+                                </constraints>
+                            </activityIndicatorView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Jumping Tracker" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="KQZ-1w-vlD">
                                 <rect key="frame" x="60.999999999999986" y="84" width="254.66666666666663" height="43"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -121,9 +128,11 @@
                             <constraint firstItem="VWU-kG-rOZ" firstAttribute="centerY" secondItem="tsR-hK-woN" secondAttribute="centerY" id="Sew-6q-TRx"/>
                             <constraint firstItem="gxd-GJ-VBG" firstAttribute="centerX" secondItem="VWU-kG-rOZ" secondAttribute="centerX" id="UGq-tO-UPK"/>
                             <constraint firstItem="y6T-0Z-2L9" firstAttribute="centerX" secondItem="tsR-hK-woN" secondAttribute="centerX" id="VLD-uO-8cq"/>
+                            <constraint firstItem="NRD-i1-Ca0" firstAttribute="centerY" secondItem="tsR-hK-woN" secondAttribute="centerY" id="lzp-hV-jNa"/>
                             <constraint firstItem="KQZ-1w-vlD" firstAttribute="top" secondItem="PQr-Ze-W5v" secondAttribute="top" constant="40" id="qdV-o0-5D1"/>
                             <constraint firstItem="y6T-0Z-2L9" firstAttribute="width" secondItem="tsR-hK-woN" secondAttribute="width" multiplier="0.66" id="quM-S4-tsC"/>
                             <constraint firstItem="PQr-Ze-W5v" firstAttribute="trailing" secondItem="VWU-kG-rOZ" secondAttribute="trailing" constant="16" id="sgL-Wi-uKO"/>
+                            <constraint firstItem="NRD-i1-Ca0" firstAttribute="centerX" secondItem="tsR-hK-woN" secondAttribute="centerX" id="so6-uX-TQq"/>
                             <constraint firstItem="VWU-kG-rOZ" firstAttribute="leading" secondItem="PQr-Ze-W5v" secondAttribute="leading" constant="16" id="x0W-IV-0iU"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="PQr-Ze-W5v"/>
@@ -132,6 +141,7 @@
                     <connections>
                         <outlet property="JumpingTracker" destination="KQZ-1w-vlD" id="vbO-ky-xhL"/>
                         <outlet property="JumpingTrackerLabelConstraintY" destination="qdV-o0-5D1" id="lKG-XV-Eam"/>
+                        <outlet property="activityIndicator" destination="NRD-i1-Ca0" id="HJj-lx-zUP"/>
                         <outlet property="loginButton" destination="82B-h7-nFD" id="ifP-dt-hAg"/>
                         <outlet property="loginTitle" destination="ySa-C5-SFc" id="de3-9I-fYG"/>
                         <outlet property="loginView" destination="y6T-0Z-2L9" id="Sk6-cm-c3t"/>
@@ -427,16 +437,22 @@
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Lf4-Tr-LOa">
                                         <rect key="frame" x="92" y="0.0" width="83.666666666666686" height="40"/>
                                         <state key="normal" title="Personal"/>
+                                        <connections>
+                                            <action selector="personalHorses:" destination="GK1-wV-kt7" eventType="touchUpInside" id="fDA-Kr-HbM"/>
+                                        </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="epK-UY-aa2">
                                         <rect key="frame" x="183.66666666666669" y="0.0" width="84" height="40"/>
                                         <state key="normal" title="Jumping"/>
+                                        <connections>
+                                            <action selector="filterHorses:" destination="GK1-wV-kt7" eventType="touchUpInside" id="qXd-Vv-fhj"/>
+                                        </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cqh-C8-VuZ">
                                         <rect key="frame" x="275.66666666666663" y="0.0" width="83.666666666666686" height="40"/>
                                         <state key="normal" title="All"/>
                                         <connections>
-                                            <action selector="allHorses:" destination="GK1-wV-kt7" eventType="touchUpInside" id="k2A-Cr-JDn"/>
+                                            <action selector="allHorses:" destination="GK1-wV-kt7" eventType="touchUpInside" id="Vsl-do-WG4"/>
                                         </connections>
                                     </button>
                                 </subviews>
@@ -525,6 +541,12 @@
                                     <outlet property="delegate" destination="GK1-wV-kt7" id="CVe-kb-qBR"/>
                                 </connections>
                             </tableView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="VOX-vs-Lpa">
+                                <rect key="frame" x="16" y="395" width="343" height="20.333333333333314"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
@@ -543,10 +565,13 @@
                             <constraint firstItem="Ve4-kV-SG0" firstAttribute="leading" secondItem="AIe-Og-IdI" secondAttribute="leading" id="VMv-jo-jLP"/>
                             <constraint firstItem="Gbq-yb-ggN" firstAttribute="leading" secondItem="AIe-Og-IdI" secondAttribute="leading" constant="-4" id="Vmj-ej-GGZ"/>
                             <constraint firstItem="Ve4-kV-SG0" firstAttribute="top" secondItem="zbR-wz-4w3" secondAttribute="bottom" constant="8" id="WAX-sc-u15"/>
+                            <constraint firstItem="AIe-Og-IdI" firstAttribute="trailing" secondItem="VOX-vs-Lpa" secondAttribute="trailing" constant="16" id="g28-q7-Eat"/>
+                            <constraint firstItem="VOX-vs-Lpa" firstAttribute="centerY" secondItem="6Wm-MW-Ged" secondAttribute="centerY" id="iQe-Il-QVn"/>
                             <constraint firstItem="y4H-0B-miS" firstAttribute="leading" secondItem="AIe-Og-IdI" secondAttribute="leading" constant="10" id="lVz-bW-od6"/>
                             <constraint firstItem="Gbq-yb-ggN" firstAttribute="top" secondItem="vo5-vO-CmM" secondAttribute="bottom" constant="2" id="pvO-wQ-72j"/>
                             <constraint firstItem="AIe-Og-IdI" firstAttribute="trailing" secondItem="zbR-wz-4w3" secondAttribute="trailing" constant="8" id="qnI-vC-bfG"/>
                             <constraint firstItem="zbR-wz-4w3" firstAttribute="leading" secondItem="AIe-Og-IdI" secondAttribute="leading" constant="8" id="uEa-hI-UkC"/>
+                            <constraint firstItem="VOX-vs-Lpa" firstAttribute="leading" secondItem="AIe-Og-IdI" secondAttribute="leading" constant="16" id="urQ-u9-Eg7"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="AIe-Og-IdI"/>
                     </view>
@@ -556,6 +581,7 @@
                         <outlet property="allHorsesButton" destination="cqh-C8-VuZ" id="X1s-Eh-DYw"/>
                         <outlet property="favoriteHorsesButton" destination="mZv-sn-Ulc" id="2VJ-6h-HRw"/>
                         <outlet property="jumpingHorsesButton" destination="epK-UY-aa2" id="hQ0-e8-VXP"/>
+                        <outlet property="noResultsLabel" destination="VOX-vs-Lpa" id="caK-c2-DAZ"/>
                         <outlet property="personalHorsesButton" destination="Lf4-Tr-LOa" id="GFU-je-Wx7"/>
                         <outlet property="progressView" destination="vo5-vO-CmM" id="o9F-Hd-iwd"/>
                         <outlet property="syncLabel" destination="y4H-0B-miS" id="yuY-cM-afL"/>

@@ -8,10 +8,12 @@
 
 import UIKit
 import Foundation
-
+import Alamofire
+import SwiftyJSON
 
 class HorsesViewController: UIViewController {
     
+    let userDefault = UserDefaults.standard
     public var response: HTTPURLResponse?
     var completionHandler:((HTTPURLResponse) -> Void)?
     var buffer: NSMutableData = NSMutableData()
@@ -26,8 +28,9 @@ class HorsesViewController: UIViewController {
     var horseOwner: String = ""
     var birthDay: String = ""
     
-    var studbookDict: Dictionary<Int, String> = [:]
-    var yearDict: Dictionary<Int, String> = [:]
+    var studbookDict: Dictionary<String, String> = [:]
+    var yearDict: Dictionary<String, String> = [:]
+    var disciplineDict: Dictionary<String, String> = [:]
     
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var titleLabel: UILabel!
@@ -39,29 +42,81 @@ class HorsesViewController: UIViewController {
     @IBOutlet weak var personalHorsesButton: UIButton!
     @IBOutlet weak var jumpingHorsesButton: UIButton!
     @IBOutlet weak var allHorsesButton: UIButton!
+    @IBOutlet weak var noResultsLabel: UILabel!
     
     @IBAction func allHorses(_ sender: UIButton) {
+        
+        requestHorseData("https://jumpingtracker.com/rest/export/json/horses?_format=json", completion: { result in
+            self.horsesArray = result
+            self.tableView.reloadData()
+        })
+        
         self.tableView.reloadData()
-        requestData("https://jumpingtracker.com/rest/export/json/horses?_format=json")
     }
     @IBAction func favoriteHorses(_ sender: UIButton) {
-        self.tableView.reloadData()
+        
         // Add user id to https string to personalize the favorites!!! e.g. .../favorite_horses/1?_format=json
-        requestData("https://jumpingtracker.com/rest/export/json/favorite_horses?_format=json")
+        if userDefault.value(forKey: "UID") != nil {
+            requestHorseData("https://jumpingtracker.com/rest/export/json/favorite_horses/\(self.userDefault.value(forKey: "UID")!)?_format=json", completion: { result in
+                self.horsesArray = result
+                self.tableView.reloadData()
+                self.progressView.isHidden = true
+                self.syncLabel.isHidden = true
+                self.activityIndicator.isHidden = true
+                self.progressView.progress = 0.0
+            })
+            
+            self.tableView.reloadData()
+        } else {
+            print("Login to view your favorite horses or register to add favorite horses.")
+            // Show label over tableView
+        }
+        self.tableView.reloadData()
+    }
+    @IBAction func personalHorses(_ sender: UIButton) {
+        if userDefault.value(forKey: "UID") != nil {
+            requestHorseData("https://jumpingtracker.com/rest/export/json/personal_horses/\(self.userDefault.value(forKey: "UID")!)?_format=json", completion: { result in
+                self.horsesArray = result
+                self.tableView.reloadData()
+            })
+            
+            self.tableView.reloadData()
+            self.progressView.isHidden = true
+            self.syncLabel.isHidden = true
+            self.activityIndicator.isHidden = true
+            self.progressView.progress = 0.0
+        } else {
+            print("Login to view your favorite horses or register to add favorite horses.")
+            // Show label over tableView
+        }
+        self.tableView.reloadData()
+    }
+    @IBAction func filterHorses(_ sender: UIButton) {
+        self.tableView.reloadData()
     }
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        yearDict = self.userDefault.object(forKey: "jaartallen") as! Dictionary<String, String>
+        studbookDict = self.userDefault.object(forKey: "studbooks") as! Dictionary<String, String>
+        disciplineDict = self.userDefault.object(forKey: "disciplines") as! Dictionary<String, String>
         setupLayout()
         configureTableView()
         // request all events
-        requestYearTaxonomy()
-        requestStudbookTaxonomy()
-        requestData("https://jumpingtracker.com/rest/export/json/horses?_format=json")
+        //requestData("https://jumpingtracker.com/rest/export/json/horses?_format=json")
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        requestHorseData("https://jumpingtracker.com/rest/export/json/horses?_format=json", completion: { (result) in
+            self.horsesArray = result
+            print("First data: \(result)")
+            self.tableView.reloadData()
+            self.progressView.isHidden = true
+            self.syncLabel.isHidden = true
+            self.activityIndicator.isHidden = true
+            self.progressView.progress = 0.0
+        })
         
     }
     override func didReceiveMemoryWarning() {
@@ -76,6 +131,13 @@ class HorsesViewController: UIViewController {
         titleLabel.layer.borderColor = UIColor.FlatColor.Blue.Denim.cgColor
         titleLabel.backgroundColor = UIColor.FlatColor.Blue.Chambray.withAlphaComponent(0.3)
         
+        noResultsLabel.isHidden = true
+        noResultsLabel.sizeToFit()
+        noResultsLabel.layer.masksToBounds = true
+        noResultsLabel.layer.borderWidth = 1.5
+        noResultsLabel.layer.borderColor = UIColor.FlatColor.Blue.Denim.cgColor
+        noResultsLabel.layer.cornerRadius = 5
+
         progressView.backgroundColor = UIColor.FlatColor.Gray.WhiteSmoke
         progressView.progress = 0.0
         progressView.progressViewStyle = .bar
@@ -88,7 +150,7 @@ class HorsesViewController: UIViewController {
         for button in tableViewButtons {
             button.layer.cornerRadius = 5
             button.layer.borderWidth = 1.5
-            button.layer.borderColor = UIColor.FlatColor.Blue.PictonBlue.cgColor
+            button.layer.borderColor = UIColor.FlatColor.Blue.BlueWhale.cgColor
             button.layer.masksToBounds = true
             button.backgroundColor = UIColor.FlatColor.Blue.Denim
             button.tintColor = UIColor.white
@@ -107,100 +169,84 @@ class HorsesViewController: UIViewController {
 }
 
 extension HorsesViewController: UITableViewDataSource, UITableViewDelegate {
-    
-    func  requestYearTaxonomy() {
+    func requestHorseData(_ urlString: String, completion: @escaping (Array<Dictionary<String, Any>>) -> ()) {
+        /// function to get taxonomies from CMS
+        print("requesting horse data")
         if ConnectionCheck.isConnectedToNetwork() {
-            let urlString = "https://jumpingtracker.com/rest/export/json/jaartallen?_format=json"
-            guard let url = URL(string: urlString) else { return }
-            URLSession.shared.dataTask(with: url) { (data, response, error) in
-                
-                if let response = response as? HTTPURLResponse {
-                    if response.statusCode != 200 {
-                        print("response was not 200!")
-                        return
+            activityIndicator.isHidden = false
+            progressView.isHidden = false
+            syncLabel.isHidden = false
+            progressView.progress = 0.0
+            let username = userDefault.string(forKey: "Username")
+            let password = getPasswordFromKeychain(username!)
+            
+            let credentialData = "\(username!):\(password)".data(using: String.Encoding.utf8)!
+            let base64Credentials = credentialData.base64EncodedString(options: [])
+            let headers: Dictionary<String, String> = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+            
+            var result: Array<Dictionary<String, Any>> = []
+            Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
+                .downloadProgress { (progress) in
+                    self.progressView.progress = Float(progress.fractionCompleted)
+                }
+                .responseJSON { (response) in
+                    if response.result.value == nil {
+                        print("No response")
                     }
-                }
-                
-                if (error != nil) {
-                    print("error request:\n \(String(describing: error?.localizedDescription))")
-                    return
-                }
-                guard let data = data else { return }
-                do {
-                    //Decode retrieved data with JSONDecoder
-                    print("Decoding years json, data = \(data)")
-                    let yearData = try JSONDecoder().decode([Years].self, from: data)
-                    
-                    
-                    for year in yearData {
-                        var yearid: Int?
-                        var jaartal: String = ""
-                        
-                        for id in year.tid {
-                            yearid = id.value
+                    switch(response.result) {
+                    case .success(let value):
+                        let swiftyJSON = JSON(value)
+                        for item in swiftyJSON {
+                            var tempDict: Dictionary<String, Any> = [:]
+                            var studids: Array<String> = []
+                            var discids: Array<String> = []
+                            let (_, dict) = item
+                            let horseN: String = String(dict["name"][0]["value"].stringValue)
+                            tempDict["name"] = horseN
+                            let horseO: String = String(dict["field_current_owner"][0]["value"].stringValue)
+                            tempDict["owner"] = horseO
+                            let birthD: String = String(dict["field_birth_year"][0]["target_id"].intValue)
+                            tempDict["birthday"] = birthD
+                            
+                            for arrayStuds in dict["field_studbook"] {
+                               let (_, dictstud) = arrayStuds
+                                let studid: String = String(dictstud["target_id"].intValue)
+                                studids.append(studid)
+                            }
+                            for arrayDisc in dict["field_discipline"] {
+                                let (_, dictdisc) = arrayDisc
+                                let discid: String = String(dictdisc["target_id"].intValue)
+                                discids.append(discid)
+                            }
+                            tempDict["studbook"] = studids
+                            tempDict["disciplines"] = discids
+                            result.append(tempDict)
                         }
-                        for jaar in year.year {
-                            jaartal = jaar.year
-                        }
-                        self.yearDict[yearid!] = jaartal
+                        // Store Date() latest synchronization
+                        self.userDefault.set(Date(), forKey: "LastHorsesSynchronization")
+                    case .failure(let error):
+                        print("Request to authenticate failed with error: \(error)")
                     }
-                    
-                    //Get back to the main queue
-                    DispatchQueue.main.async {
-                        self.yearDict = self.yearDict
-                    }
-                } catch let jsonError {
-                    print(jsonError)
+                    completion(result)
                 }
-                }.resume()
+            
         } else {
             print("No internet connection")
         }
+        
     }
-    func requestStudbookTaxonomy() {
-        if ConnectionCheck.isConnectedToNetwork() {
-            let urlString = "https://jumpingtracker.com/rest/export/json/studbooks?_format=json"
-            guard let url = URL(string: urlString) else { return }
-            URLSession.shared.dataTask(with: url) { (data, response, error) in
-                if let response = response as? HTTPURLResponse {
-                    if response.statusCode != 200 {
-                        print("response was not 200!")
-                        return
-                    }
-                }
-                if (error != nil) {
-                    print("error request:\n \(String(describing: error?.localizedDescription))")
-                    return
-                }
-                guard let data = data else { return }
-                do {
-                    //Decode retrieved data with JSONDecoder
-                    print("Decoding studbooks json, data = \(data)")
-                    let studData = try JSONDecoder().decode([Studbook].self, from: data)
-                    
-                    for stud in studData {
-                        var studid: Int?
-                        var studAcro: String = ""
-                        
-                        for id in stud.tid {
-                            studid = id.value
-                        }
-                        for acro in stud.studbook {
-                            studAcro = acro.acro
-                        }
-                        self.studbookDict[studid!] = studAcro
-                    }
-                    
-                    //Get back to the main queue
-                    DispatchQueue.main.async {
-                        self.studbookDict = self.studbookDict
-                    }
-                } catch let jsonError {
-                    print(jsonError)
-                }
-            }.resume()
-        } else {
-            print("No internet connection")
+    
+    func getPasswordFromKeychain(_ account: String) -> String {
+        do {
+            let passwordItem = KeychainPasswordItem(service: KeychainConfiguration.serviceName,
+                                                    account: account,
+                                                    accessGroup: KeychainConfiguration.accessGroup)
+            let keychainPassword = try passwordItem.readPassword()
+            return keychainPassword
+        } catch {
+            //fatalError("Error reading password from keychain - \(error)")
+            print("Error reading password from keychain - \(error)")
+            return "blablabla"
         }
     }
     func requestData(_ urlString: String) {
@@ -263,15 +309,9 @@ extension HorsesViewController: UITableViewDataSource, UITableViewDelegate {
     
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if favoriteHorsesButton.isSelected {
-            return self.favoriteHorsesArray.count
-        } else if personalHorsesButton.isSelected {
-            return self.personalHorsesArray.count
-        } else if jumpingHorsesButton.isSelected {
-            return self.personalHorsesArray.count
-        } else {
-            return self.horsesArray.count
-        }
+        
+        return self.horsesArray.count
+        
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -284,83 +324,40 @@ extension HorsesViewController: UITableViewDataSource, UITableViewDelegate {
         cell.layer.masksToBounds = true
         cell.layer.borderWidth = 0
         
-        if favoriteHorsesButton.isSelected {
-            print("horses = \(self.favoriteHorsesArray)")
-            cell.horseName.text = self.favoriteHorsesArray[indexPath.row]["name"] as? String
-            // studbook ids stored in Array<Int> in horses Array<Dictionary<String, Any>>
-            let idArray = self.favoriteHorsesArray[indexPath.row]["studbook"] as! Array<Int>
-            // convert ids to acros
+        self.tableView.isHidden = false
+        cell.horseName.text = self.horsesArray[indexPath.row]["name"] as? String
+        // studbook ids stored in Array<Int> in horses Array<Dictionary<String, Any>>
+        let idArray = self.horsesArray[indexPath.row]["studbook"] as! Array<String>
+        // convert ids to acros
+        if idArray.count > 0 {
             let acroString = convertIDtoName(idArray: idArray, dict: studbookDict)
             cell.studbook.text = acroString
-            cell.horseOwner.text = self.favoriteHorsesArray[indexPath.row]["owner"] as? String
-            
-            // Optional value birthday
-            if let yearid = self.favoriteHorsesArray[indexPath.row]["birthday"] {
-                let jaartal: String = yearDict[yearid as! Int]!
-                cell.birthDay.text = jaartal
-            } else {
-                cell.birthDay.text = ""
-            }
-        } else if personalHorsesButton.isSelected {
-            print("horses = \(self.personalHorsesArray)")
-            cell.horseName.text = self.personalHorsesArray[indexPath.row]["name"] as? String
-            // studbook ids stored in Array<Int> in horses Array<Dictionary<String, Any>>
-            let idArray = self.personalHorsesArray[indexPath.row]["studbook"] as! Array<Int>
-            // convert ids to acros
-            let acroString = convertIDtoName(idArray: idArray, dict: studbookDict)
-            cell.studbook.text = acroString
-            cell.horseOwner.text = self.personalHorsesArray[indexPath.row]["owner"] as? String
-            
-            // Optional value birthday
-            if let yearid = self.personalHorsesArray[indexPath.row]["birthday"] {
-                let jaartal: String = yearDict[yearid as! Int]!
-                cell.birthDay.text = jaartal
-            } else {
-                cell.birthDay.text = ""
-            }
-        } else if jumpingHorsesButton.isSelected {
-            print("horses = \(self.jumpingHorsesArray)")
-            cell.horseName.text = self.jumpingHorsesArray[indexPath.row]["name"] as? String
-            // studbook ids stored in Array<Int> in horses Array<Dictionary<String, Any>>
-            let idArray = self.jumpingHorsesArray[indexPath.row]["studbook"] as! Array<Int>
-            // convert ids to acros
-            let acroString = convertIDtoName(idArray: idArray, dict: studbookDict)
-            cell.studbook.text = acroString
-            cell.horseOwner.text = self.jumpingHorsesArray[indexPath.row]["owner"] as? String
-            
-            // Optional value birthday
-            if let yearid = self.jumpingHorsesArray[indexPath.row]["birthday"] {
-                let jaartal: String = yearDict[yearid as! Int]!
+        } else {
+            cell.studbook.text = ""
+        }
+        cell.horseOwner.text = self.horsesArray[indexPath.row]["owner"] as? String
+        
+        // Optional value birthday
+        if let yearid = self.horsesArray[indexPath.row]["birthday"] {
+            print("yearid: \(yearid)")
+            if yearid as? String != "0" {
+                let jaartal: String = yearDict[(yearid as? String)!]!
                 cell.birthDay.text = jaartal
             } else {
                 cell.birthDay.text = ""
             }
         } else {
-            print("horses = \(self.horsesArray)")
-            cell.horseName.text = self.horsesArray[indexPath.row]["name"] as? String
-            // studbook ids stored in Array<Int> in horses Array<Dictionary<String, Any>>
-            let idArray = self.horsesArray[indexPath.row]["studbook"] as! Array<Int>
-            // convert ids to acros
-            let acroString = convertIDtoName(idArray: idArray, dict: studbookDict)
-            cell.studbook.text = acroString
-            cell.horseOwner.text = self.horsesArray[indexPath.row]["owner"] as? String
-            
-            // Optional value birthday
-            if let yearid = self.horsesArray[indexPath.row]["birthday"] {
-                let jaartal: String = yearDict[yearid as! Int]!
-                cell.birthDay.text = jaartal
-            } else {
-                cell.birthDay.text = ""
-            }
+            cell.birthDay.text = ""
         }
+        
         return cell
     }
     
-    func convertIDtoName(idArray: Array<Int>, dict: Dictionary<Int, String>) -> String {
+    func convertIDtoName(idArray: Array<String>, dict: Dictionary<String, String>) -> String {
         var newArray: Array<String> = []
         var newString: String = ""
         for id in idArray {
-            if let acro = dict[id] {
+            if let acro = dict[String(id)] {
                 newArray.append(acro)
             }
         }
@@ -368,6 +365,12 @@ extension HorsesViewController: UITableViewDataSource, UITableViewDelegate {
         let flatArray = newArray.map{ String($0) }
         newString = flatArray.joined(separator: ", ")
         return newString
+    }
+    
+    func showNoResults(_ message: String) {
+        noResultsLabel.isHidden = false
+        tableView.isHidden = true
+        noResultsLabel.text = message
     }
 }
 
@@ -390,6 +393,7 @@ extension HorsesViewController: URLSessionDelegate, URLSessionTaskDelegate, URLS
     
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         print("urlSession did receive data")
+        progressView.progress = 0.0
         buffer.append(data)
         let percentageDownloaded = Float(buffer.length) / Float(expectedContentLength)
         updateProgress(progress: percentageDownloaded)
@@ -410,6 +414,7 @@ extension HorsesViewController: URLSessionDelegate, URLSessionTaskDelegate, URLS
             for horse in horseData {
                 var tempDict: Dictionary<String, Any> = [:]
                 var studids: Array<Int> = []
+                var disciplines: Array<Int> = []
                 for horseN in horse.name {
                     tempDict["name"] = horseN.value
                 }
@@ -424,7 +429,11 @@ extension HorsesViewController: URLSessionDelegate, URLSessionTaskDelegate, URLS
                 for birthD in horse.birthday! {
                     tempDict["birthday"] = birthD.birthday
                 }
+                for discP in horse.discipline! {
+                    disciplines.append(discP.id)
+                }
                 tempDict["studbook"] = studids
+                tempDict["discipline"] = disciplines
                 
                 if favoriteHorsesButton.isSelected {
                     self.favoriteHorsesArray.append(tempDict)
@@ -488,6 +497,25 @@ extension HorsesViewController: URLSessionDelegate, URLSessionTaskDelegate, URLS
         DispatchQueue.main.async {
             print("updating progress: \(progress)")
             self.updateProgress(progress: progress)
+        }
+    }
+    
+    func fillJumpingHorsesArray() {
+        var jumpingTid: String = ""
+        for (tid, disc) in self.disciplineDict {
+            if disc == "Show jumping" {
+                jumpingTid = tid
+            }
+        }
+        for horse in horsesArray {
+            for (key, value) in horse {
+                if key == "discipline" {
+                    if ((value as? Array<String>)?.contains(jumpingTid))! {
+                        jumpingHorsesArray.append(horse)
+                    }
+                }
+
+            }
         }
     }
 }

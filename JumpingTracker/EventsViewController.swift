@@ -104,7 +104,6 @@ extension EventsViewController: UITableViewDataSource, UITableViewDelegate {
             //let sessionDelegate = self
             let session = URLSession(configuration: configuration, delegate: self, delegateQueue: OperationQueue.main)
             let sessionTask = session.dataTask(with: request)
-            sessionTask.cancel()
             sessionTask.resume()
             //let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
     
