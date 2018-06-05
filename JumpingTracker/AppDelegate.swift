@@ -9,13 +9,21 @@
 import UIKit
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
 
     var window: UIWindow?
     var backgroundSessionCompletionHandler: (() -> Void)?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        let splitViewController = window!.rootViewController?.childViewControllers[3] as! UISplitViewController
+        let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count - 1] as! UINavigationController
+        navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
+        splitViewController.preferredDisplayMode = .allVisible
+        splitViewController.delegate = self
+        
+        UISearchBar.appearance().tintColor = UIColor.FlatColor.Blue.Chambray
+        UINavigationBar.appearance().tintColor = UIColor.FlatColor.Blue.Chambray
         return true
     }
 
@@ -43,6 +51,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
         // Background completion called here
+    }
+    
+    // MARK: - Split view
+    func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController: UIViewController, onto primaryViewController: UIViewController) -> Bool {
+        guard let secondaryAsNavController = secondaryViewController as? UINavigationController else { return false }
+        guard let topAsDetailController = secondaryAsNavController.topViewController as? HorseDetailViewController else { return false }
+        if topAsDetailController.detailHorse == nil {
+            // Return true to indicate that we have handled the collapse by doing nothing
+            return true
+        }
+        return false
     }
 }
 

@@ -52,10 +52,6 @@ class DataRequest: URLSession {
                 completion(result)
             }
             
-            .downloadProgress { (progress) in
-            print("progress: \(progress.fractionCompleted)")
-            }
-            
         } else {
             print("No internet connection")
         }

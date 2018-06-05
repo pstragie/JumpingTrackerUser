@@ -11,6 +11,9 @@
 		B60E66D920C36F28008901C1 /* UserMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66D820C36F27008901C1 /* UserMode.swift */; };
 		B60E66DB20C47978008901C1 /* DisciplineMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DA20C47978008901C1 /* DisciplineMode.swift */; };
 		B60E66DE20C4A230008901C1 /* DataRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DD20C4A230008901C1 /* DataRequest.swift */; };
+		B60E66E020C60715008901C1 /* Horse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DF20C60715008901C1 /* Horse.swift */; };
+		B60E66E220C60E94008901C1 /* HorseDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */; };
+		B60E66E620C6199D008901C1 /* SearchFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66E520C6199C008901C1 /* SearchFooter.swift */; };
 		B68EE2D820BD5B0B008C2FC5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2D720BD5B0B008C2FC5 /* AppDelegate.swift */; };
 		B68EE2DA20BD5B0B008C2FC5 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */; };
 		B68EE2DC20BD5B0B008C2FC5 /* EventsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2DB20BD5B0B008C2FC5 /* EventsViewController.swift */; };
@@ -38,6 +41,9 @@
 		B60E66D820C36F27008901C1 /* UserMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserMode.swift; sourceTree = "<group>"; };
 		B60E66DA20C47978008901C1 /* DisciplineMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisciplineMode.swift; sourceTree = "<group>"; };
 		B60E66DD20C4A230008901C1 /* DataRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataRequest.swift; sourceTree = "<group>"; };
+		B60E66DF20C60715008901C1 /* Horse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Horse.swift; sourceTree = "<group>"; };
+		B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorseDetailViewController.swift; sourceTree = "<group>"; };
+		B60E66E520C6199C008901C1 /* SearchFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFooter.swift; sourceTree = "<group>"; };
 		B68EE2D420BD5B0B008C2FC5 /* JumpingTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JumpingTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B68EE2D720BD5B0B008C2FC5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
@@ -130,11 +136,14 @@
 				B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */,
 				B68EE2DB20BD5B0B008C2FC5 /* EventsViewController.swift */,
 				B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */,
+				B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */,
 				B60E66DD20C4A230008901C1 /* DataRequest.swift */,
 				B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */,
 				B68EE2DD20BD5B0C008C2FC5 /* Main.storyboard */,
 				B68EE2EC20BD5EA6008C2FC5 /* UIColor+FlatColors.swift */,
 				B68EE2EB20BD5EA5008C2FC5 /* UIColor+Hex.swift */,
+				B60E66DF20C60715008901C1 /* Horse.swift */,
+				B60E66E520C6199C008901C1 /* SearchFooter.swift */,
 				B68EE2EF20BD5EBD008C2FC5 /* ConnectionCheck.swift */,
 				B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */,
 				B68EE2F120BD5FBB008C2FC5 /* EventsTableCells.swift */,
@@ -242,7 +251,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				B68EE2F020BD5EBE008C2FC5 /* ConnectionCheck.swift in Sources */,
+				B60E66E220C60E94008901C1 /* HorseDetailViewController.swift in Sources */,
 				B68EE30220C02AC1008C2FC5 /* YearMode.swift in Sources */,
+				B60E66E020C60715008901C1 /* Horse.swift in Sources */,
 				B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */,
 				B68EE2F420BD6E7F008C2FC5 /* EventMode.swift in Sources */,
 				B68EE2DC20BD5B0B008C2FC5 /* EventsViewController.swift in Sources */,
@@ -252,6 +263,7 @@
 				B60E66DB20C47978008901C1 /* DisciplineMode.swift in Sources */,
 				B60E66DE20C4A230008901C1 /* DataRequest.swift in Sources */,
 				B68EE2ED20BD5EA6008C2FC5 /* UIColor+Hex.swift in Sources */,
+				B60E66E620C6199D008901C1 /* SearchFooter.swift in Sources */,
 				B68EE2F220BD5FBB008C2FC5 /* EventsTableCells.swift in Sources */,
 				B68EE2D820BD5B0B008C2FC5 /* AppDelegate.swift in Sources */,
 				B68EE2FC20BF6077008C2FC5 /* StudbookMode.swift in Sources */,

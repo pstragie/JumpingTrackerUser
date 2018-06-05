@@ -104,7 +104,6 @@ class HomeViewController: UIViewController {
     
     override func viewWillLayoutSubviews() {
         // Check if previously logged in
-        print("viewWillLayoutSubviews")
     }
     // MARK: - enable login button when fields are filled
     func setupAddTargetIsNotEmptyTextFields() {
@@ -139,7 +138,6 @@ class HomeViewController: UIViewController {
                 print("get tax for \(tax)")
                 dataRequest.getTaxonomy("https://jumpingtracker.com/rest/export/json/\(tax)?_format=json", tax: tax, completion: { result -> () in
                     // Update UI or store result
-                    print("\(tax) from other view controller: \(result)")
                     
                     self.userDefault.set(result, forKey: tax)
                 })
