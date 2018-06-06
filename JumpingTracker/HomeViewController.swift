@@ -93,9 +93,7 @@ class HomeViewController: UIViewController {
     }
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        UIView.animate(withDuration: 2.0, delay: 0.5, usingSpringWithDamping: 0.1, initialSpringVelocity: 0, options: .curveEaseInOut, animations: {
-            self.JumpingTracker.center.y = self.view.bounds.height - 200
-        }, completion: nil)
+        animateJumpingTracker()
     }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -128,6 +126,12 @@ class HomeViewController: UIViewController {
         loginButton.alpha = 1.0
     }
     
+    func animateJumpingTracker() {
+        print("animating jumping tracker")
+        UIView.animate(withDuration: 2.0, delay: 0.5, usingSpringWithDamping: 0.1, initialSpringVelocity: 0, options: .curveEaseInOut, animations: {
+            self.JumpingTracker.center.y = self.view.bounds.height - 200
+        }, completion: nil)
+    }
     func requestTaxonomies() {
         print("requesting taxonomies")
         if ConnectionCheck.isConnectedToNetwork() {
@@ -352,6 +356,7 @@ class HomeViewController: UIViewController {
         print("\(String(describing: userDefault.value(forKey: "firstname")))")
         print("\(userDefault.bool(forKey: "loginSuccessful"))")
         if userDefault.bool(forKey: "loginSuccessful") {
+            animateJumpingTracker()
             print("login was successful!")
                         if userDefault.string(forKey: "firstname") != nil && userDefault.string(forKey: "firstname") != "" {
                 let username = userDefault.string(forKey: "firstname")!

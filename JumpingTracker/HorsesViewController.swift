@@ -93,7 +93,7 @@ class HorsesViewController: UIViewController, UITableViewDataSource, UITableView
             horseDetailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? HorseDetailViewController
         }
         // Setup the scope bar
-        searchController.searchBar.scopeButtonTitles = ["All", "Name", "Owner", "Studbook"]
+        searchController.searchBar.scopeButtonTitles = ["All", "Jumping", "Dressage", "Eventing"]
         searchController.searchBar.delegate = self
         // Setup the search footer
         tableView.tableFooterView = searchFooter
@@ -390,7 +390,20 @@ class HorsesViewController: UIViewController, UITableViewDataSource, UITableView
     
     func filterContentForSearchText(_ searchText: String, scope: String = "All") {
         filteredHorses = horses.filter({( horse : Horse) -> Bool in
-            let doesCategoryMatch = (scope == "All") || (horse.name == scope)
+            var newScope: String = ""
+            if scope == "Jumping" {
+                newScope = "Show jumping"
+            } else {
+                newScope = scope
+            }
+            var scopeID: String = ""
+            for (key, value) in disciplineDict {
+                if value == newScope {
+                    scopeID = key
+                }
+            }
+            print("scopeID: \(scopeID)")
+            let doesCategoryMatch = (newScope == "All") || (horse.discipline.contains(scopeID))
             
             if searchBarIsEmpty() {
                 return doesCategoryMatch
