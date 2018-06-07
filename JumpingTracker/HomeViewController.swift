@@ -15,6 +15,18 @@ struct KeychainConfiguration {
     static let serviceName = "GetMeLive"
     static let accessGroup: String? = nil
 }
+
+struct AppUtility {
+    static func lockOrientation(_ orientation: UIInterfaceOrientationMask) {
+        if let delegate = UIApplication.shared.delegate as? AppDelegate {
+            delegate.orientationLock = orientation
+        }
+    }
+    static func lockOrientation(_ orientation: UIInterfaceOrientationMask, andRotateTo rotateOrientation: UIInterfaceOrientationMask) {
+        self.lockOrientation(orientation)
+        UIDevice.current.setValue(rotateOrientation.rawValue, forKey: "orientation")
+    }
+}
 class HomeViewController: UIViewController {
     let dataRequest = DataRequest()
     var loginSuccess: Bool = false
@@ -24,7 +36,7 @@ class HomeViewController: UIViewController {
     let opQueue = OperationQueue()
     var response: URLResponse?
     var session: URLSession?
-    
+    var jumpingTrackerLabel: UILabel!
     //var headers: HTTPHeaders = ["Content-Type": "application/json"]
     
     var time: DispatchTime! {
@@ -36,8 +48,6 @@ class HomeViewController: UIViewController {
     @IBOutlet weak var welcomeLabel: UILabel!
     @IBOutlet weak var usernameLabel: UILabel!
     @IBOutlet weak var notXButton: UIButton!
-    @IBOutlet weak var JumpingTracker: UILabel!
-    @IBOutlet weak var JumpingTrackerLabelConstraintY: NSLayoutConstraint!
     @IBOutlet weak var loginTitle: UILabel!
     @IBOutlet weak var usernameField: UITextField!
     @IBOutlet weak var passwordField: UITextField!
@@ -55,7 +65,6 @@ class HomeViewController: UIViewController {
     }
     @IBAction func loginButtonTapped(_ sender: UIButton) {
         activityIndicator.startAnimating()
-        self.loginView.isHidden = true
         userDefault.set(usernameField.text, forKey: "Username")
         do {
             // This is a new account, create a new keychain item with the account name.
@@ -73,7 +82,6 @@ class HomeViewController: UIViewController {
         //userDefault.set(passwordField.text, forKey: "Password")
         
         verifyAccount()
-        showLogin()
     }
     
     // MARK: - Life Cycle
@@ -82,18 +90,30 @@ class HomeViewController: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         setupAddTargetIsNotEmptyTextFields()
         setupLayout()
-        requestTaxonomies()
+        usernameField.text = "iverelst"
+        passwordField.text = "hateandwar"
     }
 
     override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        AppUtility.lockOrientation(.all)
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        self.JumpingTracker.center.y = 40
+        jumpingTrackerLabel.center = CGPoint(x: self.view.frame.width / 2, y: 70)
+        print("viewDidDisappear")
     }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        animateJumpingTracker()
+        AppUtility.lockOrientation(.portrait)
+        print("viewDidAppear")
+        print(self.view.bounds.size.height)
+        showLogin()
     }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -101,6 +121,7 @@ class HomeViewController: UIViewController {
     }
     
     override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
         // Check if previously logged in
     }
     // MARK: - enable login button when fields are filled
@@ -126,12 +147,7 @@ class HomeViewController: UIViewController {
         loginButton.alpha = 1.0
     }
     
-    func animateJumpingTracker() {
-        print("animating jumping tracker")
-        UIView.animate(withDuration: 2.0, delay: 0.5, usingSpringWithDamping: 0.1, initialSpringVelocity: 0, options: .curveEaseInOut, animations: {
-            self.JumpingTracker.center.y = self.view.bounds.height - 200
-        }, completion: nil)
-    }
+    
     func requestTaxonomies() {
         print("requesting taxonomies")
         if ConnectionCheck.isConnectedToNetwork() {
@@ -183,7 +199,49 @@ class HomeViewController: UIViewController {
                 headers[authorizationHeader.key] = authorizationHeader.value
             }
             */
-            requestToken(parameters: loginRequest, headers: headers)
+            requestToken(parameters: loginRequest, headers: headers, success: { (uid, token) in
+                self.userDefault.set(token, forKey: "token")
+                print("Token successfully received!")
+                print("Token: \(token!)")
+                print("uid: \(uid!)")
+                self.requestTaxonomies()
+                self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, success: { (firstname) in
+                    print("firstname: \(firstname!)")
+                    self.userDefault.set(firstname, forKey: "firstname")
+                    self.userDefault.set(true, forKey: "loginSuccessful")
+                    self.loginSuccess = true
+                    self.activityIndicator.stopAnimating()
+                    self.showLogin()
+                }, failure: { (error) in
+                    print("UID failure.")
+                    self.userDefault.set(false, forKey: "loginSuccessful")
+                    self.loginSuccess = false
+                    // Try again automatically
+                    print("Retrying firstname retrieval.")
+                    self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, success: { (firstname) in
+                        print("firstname: \(firstname!)")
+                        self.userDefault.set(firstname, forKey: "firstname")
+                        self.userDefault.set(true, forKey: "loginSuccessful")
+                        self.loginSuccess = true
+                        self.activityIndicator.stopAnimating()
+                        self.showLogin()
+                    }, failure: { (error) in
+                        print("UID failure.")
+                        self.userDefault.set(false, forKey: "loginSuccessful")
+                        self.loginSuccess = false
+                        self.activityIndicator.stopAnimating()
+                        self.showLoginFailedAlert("Login successful, but could not retreive user data.\nTry again later.")
+                        
+                    })
+                })
+            }, failure: { (error) in
+                print("Token failure")
+                self.userDefault.set(false, forKey: "loginSuccessful")
+                self.loginSuccess = false
+                self.activityIndicator.stopAnimating()
+                self.loginView.shake()
+            })
+            
             //requestTokenWithBasicAuth()
             // 4. On each request, the JWT should be sent in the "Authorization" header
             // Authorization: Bearer <token>
@@ -192,6 +250,7 @@ class HomeViewController: UIViewController {
             // 6. If validated, the response gets returned to the client.
             //let headerWithToken = ["Authorization": "Bearer: \(self.token)", "Cache-Control": "no-cache"]
             
+
             // Open the operations queue after 1 second
             DispatchQueue.main.asyncAfter(deadline: self.time, execute: {[weak self] in
                 print("Opening the OperationQueue")
@@ -202,63 +261,142 @@ class HomeViewController: UIViewController {
         }
     }
     
+    
     // MARK: - Data requests
-    func requestToken(parameters: Dictionary<String, Any>, headers: Dictionary<String, String>) {
+    func requestToken(parameters: Dictionary<String, Any>, headers: Dictionary<String, String>, success: @escaping (_ uid: String?, _ token: String?) -> Void, failure: @escaping (_ error: Error?) -> Void) {
         // Working! Do not touch!
         print("Requesting token...")
-        Alamofire.request("https://jumpingtracker.com/jwt/token", method: .post, encoding: JSONEncoding.default, headers: headers).responseJSON { (response) in
-            if response.result.value == nil {
-                print("No response!")
+        Alamofire.request("https://jumpingtracker.com/jwt/token", method: .get, encoding: JSONEncoding.default, headers: headers)
+            .validate(statusCode: 200..<299)
+            .responseJSON { (response) in
+                if response.result.value == nil {
+                    print("No response!")
+                }
+                print("response result = \(response.result)")
+                switch(response.result) {
+                case .success(let value):
+                    let swiftyJSON = JSON(value)
+                    let token = swiftyJSON["token"].stringValue
+                    self.userDefault.set(token, forKey: "JWT_token")
+                    let decoded = JSON(self.decode(jwtToken: token))
+                    let uid = decoded["drupal"]["uid"].stringValue
+                    print("UID = \(uid)")
+                    self.userDefault.set(uid, forKey: "UID")
+                    //let headerWithToken = ["Authorization": "Bearer: \(token)", "Cache-Control": "no-cache"]
+                    success(uid, token)
+                    break
+                case .failure(let error):
+                    print("Request failed with error: \(error)")
+                    failure(error)
+                    //self.showLoginFailedAlert()
+                    break
+                }
+                guard case let .failure(error) = response.result else { return }
+            
+            if let error = error as? AFError {
+                switch error {
+                case .invalidURL(let url):
+                    print("Invalid URL: \(url) - \(error.localizedDescription)")
+                case .parameterEncodingFailed(let reason):
+                    print("Parameter encoding failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                case .multipartEncodingFailed(let reason):
+                    print("Multipart encoding failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                case .responseValidationFailed(let reason):
+                    self.loginView.shake()
+
+                    print("Response validation failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                    
+                    switch reason {
+                    case .dataFileNil, .dataFileReadFailed:
+                        print("Downlaoded file could not be read")
+                    case .missingContentType(let acceptableContentTypes):
+                        print("Content Type Missing: \(acceptableContentTypes)")
+                    case .unacceptableContentType(let acceptableContentTypes, let responseContentType):
+                        print("Response content type: \(responseContentType) was uncacceptable: \(acceptableContentTypes)")
+                    case .unacceptableStatusCode(let code):
+                        print("Response status code was unacceptable: \(code)")
+                    }
+                case .responseSerializationFailed(let reason):
+                    print("Response serialization failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                }
+                print("Underlying error: \(String(describing: error.underlyingError))")
+            } else if let error = error as? URLError {
+                print("URLError occurred: \(error)")
+            } else {
+                print("Unknown error: \(error)")
             }
-            switch(response.result) {
-            case .success(let value):
-                let swiftyJSON = JSON(value)
-                let token = swiftyJSON["token"].stringValue
-                self.userDefault.set(token, forKey: "JWT_token")
-                let decoded = JSON(self.decode(jwtToken: token))
-                let uid = decoded["drupal"]["uid"].stringValue
-                print("UID = \(uid)")
-                self.userDefault.set(uid, forKey: "UID")
-                self.loginSuccess = true
-                //let headerWithToken = ["Authorization": "Bearer: \(token)", "Cache-Control": "no-cache"]
-                self.requestJSON("https://jumpingtracker.com/user/\(uid)?_format=json", headers: headers)
-                break
-            case .failure(let error):
-                self.loginSuccess = false
-                print("Request failed with error: \(error)")
-                
-                self.showLoginFailedAlert()
-                
-                break
-            }
+            
             
         }
     }
     
-    func requestJSON(_ urlString: String, headers: Dictionary<String, String>) {
+    func requestJSON(_ urlString: String, headers: Dictionary<String, String>, success: @escaping (_ firstname: String?) -> Void, failure: @escaping (_ error: Error?) -> Void)  {
         print("Requesting JSON...")
         
-        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers).responseJSON { (response) in
-            if response.result.value == nil {
-                print("No response")
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
+            .validate(statusCode: 200..<299)
+            .validate(contentType: ["application/json"])
+            .responseJSON { (response) in
+                if response.result.value == nil {
+                    print("No response")
+                }
+                switch(response.result) {
+                case .success(let value):
+                    let swiftyJSON = JSON(value)
+                    let firstname = swiftyJSON["field_firstname"][0]["value"].stringValue
+                    let surname = swiftyJSON["field_surname"][0]["value"].stringValue
+                    
+                    self.userDefault.set(firstname, forKey: "firstname")
+                    self.userDefault.set(surname, forKey: "surname")
+                    success(firstname)
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    failure(error)
+                    break
+                }
+            guard case let .failure(error) = response.result else { return }
+            
+            if let error = error as? AFError {
+                switch error {
+                case .invalidURL(let url):
+                    print("Invalid URL: \(url) - \(error.localizedDescription)")
+                case .parameterEncodingFailed(let reason):
+                    print("Parameter encoding failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                case .multipartEncodingFailed(let reason):
+                    print("Multipart encoding failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                case .responseValidationFailed(let reason):
+                    print("Response validation failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                    self.loginView.shake()
+
+                    switch reason {
+                    case .dataFileNil, .dataFileReadFailed:
+                        print("Downlaoded file could not be read")
+                    case .missingContentType(let acceptableContentTypes):
+                        print("Content Type Missing: \(acceptableContentTypes)")
+                    case .unacceptableContentType(let acceptableContentTypes, let responseContentType):
+                        print("Response content type: \(responseContentType) was uncacceptable: \(acceptableContentTypes)")
+                    case .unacceptableStatusCode(let code):
+                        print("Response status code was unacceptable: \(code)")
+                    }
+                case .responseSerializationFailed(let reason):
+                    print("Response serialization failed: \(error.localizedDescription)")
+                    print("Failure Reason: \(reason)")
+                }
+                print("Underlying error: \(String(describing: error.underlyingError))")
+            } else if let error = error as? URLError {
+                print("URLError occurred: \(error)")
+            } else {
+                print("Unknown error: \(error)")
             }
-            switch(response.result) {
-            case .success(let value):
-                let swiftyJSON = JSON(value)
-                let firstname = swiftyJSON["field_firstname"][0]["value"].stringValue
-                let surname = swiftyJSON["field_surname"][0]["value"].stringValue
-                
-                self.userDefault.set(firstname, forKey: "firstname")
-                self.userDefault.set(surname, forKey: "surname")
-                self.userDefault.set(true, forKey: "loginSuccessful")
-                self.showLogin()
-                break
-            case .failure(let error):
-                print("Request to authenticate failed with error: \(error)")
-                self.userDefault.set(false, forKey: "loginSuccessful")
-                self.showLogin()
-                break
-            }
+            
             
         }
     }
@@ -293,14 +431,13 @@ class HomeViewController: UIViewController {
     }
     
     // MARK: - login failed alert
-    private func showLoginFailedAlert() {
+    private func showLoginFailedAlert(_ message: String) {
         let alertView = UIAlertController(title: "Login Problem",
-                                          message: "Wrong username or password.",
+                                          message: message,
                                           preferredStyle:. alert)
-        let okAction = UIAlertAction(title: "Login failed!", style: .default)
+        let okAction = UIAlertAction(title: "OK", style: .default)
         alertView.addAction(okAction)
         present(alertView, animated: true)
-        self.showLogin()
     }
     
     func getPasswordFromKeychain(_ account: String) -> String {
@@ -320,13 +457,31 @@ class HomeViewController: UIViewController {
     
     // MARK: - setup layout
     func setupLayout() {
-        usernameField.layer.borderColor = UIColor.FlatColor.Blue.Denim.cgColor
+        // Create JumpingTracker Label
+        jumpingTrackerLabel = UILabel()
+        jumpingTrackerLabel.text = "Jumping Tracker"
+        jumpingTrackerLabel.font = UIFont.systemFont(ofSize: 36, weight: .semibold)
+        jumpingTrackerLabel.sizeToFit()
+        jumpingTrackerLabel.layer.cornerRadius = 5
+        jumpingTrackerLabel.layer.masksToBounds = true
+        jumpingTrackerLabel.backgroundColor = UIColor(white: 1.0, alpha: 0.8)
+        jumpingTrackerLabel.center = CGPoint(x: self.view.frame.width / 2, y: 70)
+        view.addSubview(jumpingTrackerLabel)
+        
+        welcomeLabel.isHidden = true
+        notXButton.isHidden = true
+        usernameLabel.isHidden = true
+        loginTitle.layer.masksToBounds = true
+        loginTitle.layer.cornerRadius = 5
+        loginView.backgroundColor = UIColor(white: 1.0, alpha: 0.7)
+        
+        usernameField.layer.borderColor = UIColor.FlatColor.Blue.BlueWhale.cgColor
         usernameField.layer.borderWidth = 1.5
         usernameField.layer.cornerRadius = 10
         usernameField.layer.masksToBounds = true
         usernameField.tintColor = UIColor.FlatColor.Gray.Iron
         
-        passwordField.layer.borderColor = UIColor.FlatColor.Blue.Denim.cgColor
+        passwordField.layer.borderColor = UIColor.FlatColor.Blue.BlueWhale.cgColor
         passwordField.layer.borderWidth = 1.5
         passwordField.layer.cornerRadius = 10
         passwordField.layer.masksToBounds = true
@@ -334,7 +489,7 @@ class HomeViewController: UIViewController {
         
         loginButton.layer.cornerRadius = 10
         loginButton.layer.borderWidth = 1.5
-        loginButton.layer.borderColor = UIColor.FlatColor.Blue.PictonBlue.cgColor
+        loginButton.layer.borderColor = UIColor.FlatColor.Blue.BlueWhale.cgColor
         loginButton.backgroundColor = UIColor.FlatColor.Blue.Denim
         loginButton.layer.masksToBounds = true
         loginButton.tintColor = UIColor.white
@@ -343,22 +498,22 @@ class HomeViewController: UIViewController {
         
         registerButton.layer.cornerRadius = 10
         registerButton.layer.borderWidth = 1.5
-        registerButton.layer.borderColor = UIColor.FlatColor.Blue.PictonBlue.cgColor
+        registerButton.layer.borderColor = UIColor.FlatColor.Blue.BlueWhale.cgColor
         registerButton.backgroundColor = UIColor.FlatColor.Blue.Denim
         registerButton.layer.masksToBounds = true
         registerButton.tintColor = UIColor.white
         
-        showLogin()
+        activityIndicator.stopAnimating()
     }
     
     func showLogin() {
         print("show Login?")
-        print("\(String(describing: userDefault.value(forKey: "firstname")))")
-        print("\(userDefault.bool(forKey: "loginSuccessful"))")
-        if userDefault.bool(forKey: "loginSuccessful") {
-            animateJumpingTracker()
-            print("login was successful!")
-                        if userDefault.string(forKey: "firstname") != nil && userDefault.string(forKey: "firstname") != "" {
+        print("userDefault: \(userDefault.bool(forKey: "loginSuccessful"))")
+        print("loginSuccess: \(loginSuccess)")
+        if loginSuccess {
+            loginView.isHidden = true
+            print("user previously logged in!")
+            if userDefault.string(forKey: "firstname") != nil && userDefault.string(forKey: "firstname") != "" {
                 let username = userDefault.string(forKey: "firstname")!
                 usernameLabel.text = username.lowercased()
                 notXButton.setTitle("not \(username)?", for: .normal)
@@ -366,20 +521,44 @@ class HomeViewController: UIViewController {
                 usernameLabel.text = ""
                 notXButton.setTitle("Login", for: .normal)
             }
-            loginView.isHidden = true
-            welcomeLabel.isHidden = false
-            notXButton.isHidden = false
-            usernameLabel.isHidden = false
-            activityIndicator.stopAnimating()
+            animateJumpingTracker()
         } else {
+            
             loginView.isHidden = false
             welcomeLabel.isHidden = true
             notXButton.isHidden = true
             usernameLabel.isHidden = true
-            activityIndicator.stopAnimating()
         }
+    }
+    
+
+    func animateJumpingTracker() {
+        print("animating jumping tracker")
+        UIView.animate(withDuration: 2.0, delay: 0.0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.0, options: .curveLinear, animations: {
+            self.jumpingTrackerLabel.center = CGPoint(x: self.view.frame.width / 2, y: self.view.frame.height - 150)
+
+        }, completion: { (finished: Bool) in
+            UIView.animate(withDuration: 0.5, delay: 0.5, options: .showHideTransitionViews, animations: {
+                self.welcomeLabel.isHidden = false
+                self.usernameLabel.isHidden = false
+            }, completion: { (finished: Bool) in
+                UIView.animate(withDuration: 0.5, delay: 2.0, options: .showHideTransitionViews, animations: {
+                    self.notXButton.isHidden = false
+                }, completion: nil)
+            
+            })
+        })
     }
 }
 
-
-
+extension UIView {
+    func shake() {
+        let animation = CABasicAnimation(keyPath: "position")
+        animation.duration = 0.07
+        animation.repeatCount = 3
+        animation.autoreverses = true
+        animation.fromValue = NSValue(cgPoint: CGPoint(x: self.center.x - 10, y: self.center.y))
+        animation.toValue = NSValue(cgPoint: CGPoint(x: self.center.x + 10, y: self.center.y))
+        self.layer.add(animation, forKey: "position")
+    }
+}

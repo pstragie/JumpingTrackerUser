@@ -28,10 +28,17 @@ class HorseTableCell: UITableViewCell {
         super.awakeFromNib()
         BGView.layer.cornerRadius = 5
         BGView.layer.masksToBounds = true
-        BGView.layer.borderWidth = 1
-        BGView.layer.borderColor = UIColor.FlatColor.Blue.Denim.cgColor
-        BGView.backgroundColor = UIColor.FlatColor.Gray.WhiteSmoke
+        BGView.backgroundColor = UIColor.white
+        BGView.addBottomBorder(borderColor: UIColor.FlatColor.Blue.BlueWhale, borderWidth: 1.5)
+        
+        horseName.textColor = UIColor.FlatColor.Blue.BlueWhale
     }
     
 }
-
+extension UIView {
+    func addBottomBorder(borderColor: UIColor, borderWidth: CGFloat) {
+        let border = CALayer()
+        border.backgroundColor = borderColor.cgColor
+        border.frame = CGRect(x: 0, y: self.frame.size.height - borderWidth, width: self.frame.size.width, height: borderWidth)
+    }
+}

@@ -26,6 +26,12 @@ class HorsesViewController: UIViewController, UITableViewDataSource, UITableView
     var yearDict: Dictionary<String, String> = [:]
     var disciplineDict: Dictionary<String, String> = [:]
     
+    private lazy var stackBackgroundView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.FlatColor.Blue.BlueWhale
+        return view
+    }()
+    
     @IBOutlet var searchFooter: SearchFooter!
     @IBOutlet var tableView: UITableView!
     @IBOutlet weak var syncLabel: UILabel!
@@ -34,7 +40,8 @@ class HorsesViewController: UIViewController, UITableViewDataSource, UITableView
     @IBOutlet var tableViewButtons: [UIButton]!
     @IBOutlet weak var favoriteHorsesButton: UIButton!
     @IBOutlet weak var personalHorsesButton: UIButton!
-    @IBOutlet weak var jumpingHorsesButton: UIButton!
+
+    @IBOutlet weak var stackViewButtons: UIStackView!
     @IBOutlet weak var allHorsesButton: UIButton!
     @IBOutlet weak var noResultsLabel: UILabel!
     
@@ -109,9 +116,9 @@ class HorsesViewController: UIViewController, UITableViewDataSource, UITableView
         definesPresentationContext = true
         
         // Do any additional setup after loading the view, typically from a nib.
-        yearDict = self.userDefault.object(forKey: "jaartallen") as! Dictionary<String, String>
-        studbookDict = self.userDefault.object(forKey: "studbooks") as! Dictionary<String, String>
-        disciplineDict = self.userDefault.object(forKey: "disciplines") as! Dictionary<String, String>
+        yearDict = self.userDefault.object(forKey: "jaartallen") as? Dictionary<String, String> ?? ["":""]
+        studbookDict = self.userDefault.object(forKey: "studbooks") as? Dictionary<String, String> ?? ["":""]
+        disciplineDict = self.userDefault.object(forKey: "disciplines") as? Dictionary<String, String> ?? ["":""]
         checkTaxDicts()
         setupNavBar()
         setupLayout()
@@ -151,13 +158,19 @@ class HorsesViewController: UIViewController, UITableViewDataSource, UITableView
         print("Checking taxonomy dictionaries...")
         let taxos = ["jaartallen", "studbooks", "disciplines"]
         for tax in taxos {
-            if ((self.userDefault.object(forKey: tax) as? Dictionary<String, String>)?.isEmpty)! {
+            if (self.userDefault.object(forKey: tax) == nil) || ((self.userDefault.object(forKey: tax) as? Dictionary<String, String>)?.isEmpty)! {
                 DataRequest().getTaxonomy("https://jumpingtracker.com/rest/export/json/\(tax)?_format=json", tax: tax, completion: { result -> () in
                     // Update UI or store result
                     self.userDefault.set(result, forKey: tax)
                 })
             }
         }
+    }
+    
+    private func pinBackground(_ view: UIView, to stackView: UIStackView) {
+        view.translatesAutoresizingMaskIntoConstraints = false
+        stackView.insertSubview(view, at: 0)
+        view.pin(to: stackView)
     }
     
     func setupNavBar() {
@@ -189,16 +202,23 @@ class HorsesViewController: UIViewController, UITableViewDataSource, UITableView
         syncLabel.isHidden = true
         activityIndicator.isHidden = true
         
+        pinBackground(stackBackgroundView, to: stackViewButtons)
+        stackViewButtons.alpha = 1.0
+        
         for button in tableViewButtons {
             button.layer.cornerRadius = 5
-            button.layer.borderWidth = 1.5
-            button.layer.borderColor = UIColor.FlatColor.Blue.BlueWhale.cgColor
             button.layer.masksToBounds = true
-            button.backgroundColor = UIColor.FlatColor.Blue.Denim
             button.tintColor = UIColor.white
         }
+        favoriteHorsesButton.addRightBorder(borderColor: UIColor.FlatColor.Gray.WhiteSmoke, borderWidth: 1.0)
+        personalHorsesButton.addRightBorder(borderColor: UIColor.FlatColor.Gray.WhiteSmoke, borderWidth: 1.0)
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped))
     }
     
+    @objc func resyncTapped() {
+        // Synchronize horses
+    }
     func configureTableView() {
         self.tableView.autoresizingMask = [.flexibleHeight]
     }
@@ -500,5 +520,31 @@ extension HorsesViewController: UISearchResultsUpdating {
 extension HorsesViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, selectedScopeButtonIndexDidChange selectedScope: Int) {
         filterContentForSearchText(searchBar.text!, scope: searchBar.scopeButtonTitles![selectedScope])
+    }
+}
+
+extension UIButton {
+    func addRightBorder(borderColor: UIColor, borderWidth: CGFloat) {
+        let border = CALayer()
+        border.backgroundColor = borderColor.cgColor
+        border.frame = CGRect(x: self.frame.size.width - borderWidth, y: 0, width: borderWidth, height: self.frame.size.height)
+        self.layer.addSublayer(border)
+    }
+    
+    func addLeftBorder(borderColor: UIColor, borderWidth: CGFloat) {
+        let border = CALayer()
+        border.backgroundColor = borderColor.cgColor
+        border.frame = CGRect(x: 0, y: 0, width: borderWidth, height: self.frame.size.height)
+        self.layer.addSublayer(border)
+    }
+}
+
+public extension UIView {
+    public func pin(to view: UIView) {
+        NSLayoutConstraint.activate([
+            leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            topAnchor.constraint(equalTo: view.topAnchor),
+            bottomAnchor.constraint(equalTo: view.bottomAnchor)])
     }
 }
