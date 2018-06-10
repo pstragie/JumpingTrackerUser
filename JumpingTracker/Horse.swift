@@ -9,6 +9,8 @@
 import Foundation
 
 struct Horse {
+    let tid: Int
+    let uuid: String
     let name: String
     let owner: String
     let birthDay: String

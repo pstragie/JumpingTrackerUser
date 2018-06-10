@@ -9,21 +9,31 @@
 import Foundation
 import UIKit
 
-struct Horses: Decodable {
+struct Horses: Codable {
+    var tid: [ID]
+    var uuid: [UUID]
     var name: [Name]
     var studbook: [Studbook]
     var owner: [Owner]?
     var birthday: [Birthday]?
-    var deceased: [Deceased]?
     var discipline: [Discipline]?
     
     enum CodingKeys: String, CodingKey {
+        case tid
+        case uuid
         case name
         case studbook = "field_studbook"
         case owner = "field_current_owner"
         case birthday = "field_birth_year"
-        case deceased = "field_deceased"
         case discipline = "field_discipline"
+    }
+    
+    struct ID: Codable {
+        var value: Int
+    }
+    
+    struct UUID: Codable {
+        var value: String
     }
     
     struct Name: Codable {
@@ -53,14 +63,6 @@ struct Horses: Decodable {
             case birthday = "target_id"
         }
         
-    }
-    
-    struct Deceased: Codable {
-        var deceased: Bool
-        
-        enum CodingKeys: String, CodingKey {
-            case deceased = "value"
-        }
     }
     
     struct Discipline: Codable {

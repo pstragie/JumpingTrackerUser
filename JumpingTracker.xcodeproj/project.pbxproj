@@ -33,6 +33,8 @@
 		B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */; };
 		B68EE30820C20C6A008C2FC5 /* Snippets in Resources */ = {isa = PBXBuildFile; fileRef = B68EE30720C20C6A008C2FC5 /* Snippets */; };
 		B68EE30A20C34C6E008C2FC5 /* KeychainPasswordItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30920C34C6E008C2FC5 /* KeychainPasswordItem.swift */; };
+		B698860B20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */; };
+		B698860E20CB6CA6002AFFC1 /* dataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B698860C20CB6CA6002AFFC1 /* dataModel.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +67,8 @@
 		B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventsViewController.swift; sourceTree = "<group>"; };
 		B68EE30720C20C6A008C2FC5 /* Snippets */ = {isa = PBXFileReference; lastKnownFileType = text; path = Snippets; sourceTree = "<group>"; };
 		B68EE30920C34C6E008C2FC5 /* KeychainPasswordItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainPasswordItem.swift; sourceTree = "<group>"; };
+		B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFavoriteHorseViewController.swift; sourceTree = "<group>"; };
+		B698860D20CB6CA6002AFFC1 /* dataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = dataModel.xcdatamodel; sourceTree = "<group>"; };
 		ECA3DB9B5F8F20F4BD1CAB00 /* Pods-JumpingTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JumpingTracker.release.xcconfig"; path = "Pods/Target Support Files/Pods-JumpingTracker/Pods-JumpingTracker.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -136,6 +140,7 @@
 				B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */,
 				B68EE2DB20BD5B0B008C2FC5 /* EventsViewController.swift */,
 				B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */,
+				B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */,
 				B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */,
 				B60E66DD20C4A230008901C1 /* DataRequest.swift */,
 				B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */,
@@ -152,6 +157,7 @@
 				B68EE2E220BD5B22008C2FC5 /* LaunchScreen.storyboard */,
 				B68EE2E520BD5B23008C2FC5 /* Info.plist */,
 				B68EE30720C20C6A008C2FC5 /* Snippets */,
+				B698860C20CB6CA6002AFFC1 /* dataModel.xcdatamodeld */,
 			);
 			path = JumpingTracker;
 			sourceTree = "<group>";
@@ -259,6 +265,7 @@
 				B68EE2DC20BD5B0B008C2FC5 /* EventsViewController.swift in Sources */,
 				B68EE30A20C34C6E008C2FC5 /* KeychainPasswordItem.swift in Sources */,
 				B68EE2EE20BD5EA6008C2FC5 /* UIColor+FlatColors.swift in Sources */,
+				B698860E20CB6CA6002AFFC1 /* dataModel.xcdatamodeld in Sources */,
 				B68EE30020BF64AB008C2FC5 /* HorseTableCells.swift in Sources */,
 				B60E66DB20C47978008901C1 /* DisciplineMode.swift in Sources */,
 				B60E66DE20C4A230008901C1 /* DataRequest.swift in Sources */,
@@ -270,6 +277,7 @@
 				B68EE2FE20BF6165008C2FC5 /* HorsesViewController.swift in Sources */,
 				B60E66D920C36F28008901C1 /* UserMode.swift in Sources */,
 				B68EE2DA20BD5B0B008C2FC5 /* HomeViewController.swift in Sources */,
+				B698860B20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift in Sources */,
 				B68EE2FA20BF5B37008C2FC5 /* HorseMode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -346,6 +354,8 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -400,6 +410,8 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -417,6 +429,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = HUS279SULR;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = JumpingTracker/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -425,6 +438,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.PWS-apps.equestrian.JumpingTracker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -437,6 +451,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = HUS279SULR;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = JumpingTracker/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -445,6 +460,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.PWS-apps.equestrian.JumpingTracker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -472,6 +488,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		B698860C20CB6CA6002AFFC1 /* dataModel.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				B698860D20CB6CA6002AFFC1 /* dataModel.xcdatamodel */,
+			);
+			currentVersion = B698860D20CB6CA6002AFFC1 /* dataModel.xcdatamodel */;
+			path = dataModel.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = B68EE2CC20BD5B0B008C2FC5 /* Project object */;
 }

@@ -36,6 +36,7 @@ class HomeViewController: UIViewController {
     let opQueue = OperationQueue()
     var response: URLResponse?
     var session: URLSession?
+    var jtView: UIView!
     var jumpingTrackerLabel: UILabel!
     //var headers: HTTPHeaders = ["Content-Type": "application/json"]
     
@@ -54,14 +55,16 @@ class HomeViewController: UIViewController {
     @IBOutlet weak var loginButton: UIButton!
     @IBOutlet weak var registerButton: UIButton!
     @IBOutlet weak var loginView: UIView!
+    @IBOutlet var firstView: UIView!
     
     @IBAction func registerButtonTapped(_ sender: UIButton) {
     }
     @IBAction func notXButtonTapped(_ sender: UIButton) {
-        loginView.isHidden = false
-        welcomeLabel.isHidden = true
-        notXButton.isHidden = true
-        usernameLabel.isHidden = true
+        userDefault.set(nil, forKey: "UID")
+        userDefault.set(false, forKey: "loginSuccessful")
+        loginSuccess = false
+        perform(#selector(flip), with: nil, afterDelay: 1)
+        
     }
     @IBAction func loginButtonTapped(_ sender: UIButton) {
         activityIndicator.startAnimating()
@@ -104,7 +107,8 @@ class HomeViewController: UIViewController {
     }
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        jumpingTrackerLabel.center = CGPoint(x: self.view.frame.width / 2, y: 70)
+        jtView = UIView(frame: CGRect(x: 20, y: 70, width: 300, height: 50))
+        jtView.center.x = self.view.center.x
         print("viewDidDisappear")
     }
     
@@ -279,6 +283,7 @@ class HomeViewController: UIViewController {
                     let token = swiftyJSON["token"].stringValue
                     self.userDefault.set(token, forKey: "JWT_token")
                     let decoded = JSON(self.decode(jwtToken: token))
+                    print("decoded: \(decoded)")
                     let uid = decoded["drupal"]["uid"].stringValue
                     print("UID = \(uid)")
                     self.userDefault.set(uid, forKey: "UID")
@@ -457,16 +462,23 @@ class HomeViewController: UIViewController {
     
     // MARK: - setup layout
     func setupLayout() {
+        // Create JumpingTracker View
+        jtView = UIView(frame: CGRect(x: 20, y: 70, width: 300, height: 50))
+        jtView.center.x = self.view.center.x
+        jtView.layer.cornerRadius = 22
+        jtView.sizeToFit()
         // Create JumpingTracker Label
-        jumpingTrackerLabel = UILabel()
+        jumpingTrackerLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 300, height: 44))
         jumpingTrackerLabel.text = "Jumping Tracker"
         jumpingTrackerLabel.font = UIFont.systemFont(ofSize: 36, weight: .semibold)
-        jumpingTrackerLabel.sizeToFit()
-        jumpingTrackerLabel.layer.cornerRadius = 5
+        //jumpingTrackerLabel.sizeToFit()
+        jumpingTrackerLabel.layer.cornerRadius = 22
         jumpingTrackerLabel.layer.masksToBounds = true
-        jumpingTrackerLabel.backgroundColor = UIColor(white: 1.0, alpha: 0.8)
-        jumpingTrackerLabel.center = CGPoint(x: self.view.frame.width / 2, y: 70)
-        view.addSubview(jumpingTrackerLabel)
+        //jumpingTrackerLabel.center = self.view.center
+        //jumpingTrackerLabel.backgroundColor = UIColor(white: 1.0, alpha: 0.8)
+        jumpingTrackerLabel.textAlignment = .center
+        jtView.addSubview(jumpingTrackerLabel)
+        self.view.addSubview(jtView)
         
         welcomeLabel.isHidden = true
         notXButton.isHidden = true
@@ -510,7 +522,7 @@ class HomeViewController: UIViewController {
         print("show Login?")
         print("userDefault: \(userDefault.bool(forKey: "loginSuccessful"))")
         print("loginSuccess: \(loginSuccess)")
-        if loginSuccess {
+        if userDefault.bool(forKey: "loginSuccessful") {
             loginView.isHidden = true
             print("user previously logged in!")
             if userDefault.string(forKey: "firstname") != nil && userDefault.string(forKey: "firstname") != "" {
@@ -523,7 +535,9 @@ class HomeViewController: UIViewController {
             }
             animateJumpingTracker()
         } else {
-            
+            jtView.frame = CGRect(x: (self.view.frame.width / 2) - 150, y: 70, width: 300, height: 50)
+            //jtView = UIView(frame: CGRect(x: 20, y: 70, width: 300, height: 50))
+            //jtView.center.x = self.view.center.x
             loginView.isHidden = false
             welcomeLabel.isHidden = true
             notXButton.isHidden = true
@@ -531,11 +545,35 @@ class HomeViewController: UIViewController {
         }
     }
     
+    @objc func flip() {
+        let transitionOptions: UIViewAnimationOptions = [.transitionFlipFromRight, .showHideTransitionViews]
+        UIView.transition(with: self.view, duration: 1.0, options: transitionOptions, animations: {
+            self.view.isHidden = true
+        }, completion: { (finished: Bool) in
+            self.showHide()
+            
+        })
+        UIView.transition(with: self.view, duration: 1.0, options: transitionOptions, animations: {
+            self.view.isHidden = false
+        }, completion: nil)
+    }
+    
+    func showHide() {
+        jtView.frame = CGRect(x: (self.view.frame.width / 2) - 150, y: 70, width: 300, height: 50)
+        //jtView = UIView(frame: CGRect(x: 20, y: 70, width: 300, height: 50))
+        //jtView.center.x = self.view.center.x
+        self.loginView.isHidden = false
+        self.welcomeLabel.isHidden = true
+        self.notXButton.isHidden = true
+        self.usernameLabel.isHidden = true
+        
+    }
 
     func animateJumpingTracker() {
         print("animating jumping tracker")
         UIView.animate(withDuration: 2.0, delay: 0.0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.0, options: .curveLinear, animations: {
-            self.jumpingTrackerLabel.center = CGPoint(x: self.view.frame.width / 2, y: self.view.frame.height - 150)
+            self.jtView.setGradientBackground()
+            self.jtView.center = CGPoint(x: self.view.frame.width / 2, y: self.view.frame.height - 150)
 
         }, completion: { (finished: Bool) in
             UIView.animate(withDuration: 0.5, delay: 0.5, options: .showHideTransitionViews, animations: {
@@ -552,7 +590,7 @@ class HomeViewController: UIViewController {
 }
 
 extension UIView {
-    func shake() {
+    func shake() { // left to right
         let animation = CABasicAnimation(keyPath: "position")
         animation.duration = 0.07
         animation.repeatCount = 3
@@ -560,5 +598,31 @@ extension UIView {
         animation.fromValue = NSValue(cgPoint: CGPoint(x: self.center.x - 10, y: self.center.y))
         animation.toValue = NSValue(cgPoint: CGPoint(x: self.center.x + 10, y: self.center.y))
         self.layer.add(animation, forKey: "position")
+    }
+    
+    func pulsate() {
+        let pulse = CASpringAnimation(keyPath: "transfrom.scale")
+        pulse.duration = 0.6
+        pulse.fromValue = 0.90
+        pulse.toValue = 1.10
+        pulse.autoreverses = true
+        pulse.repeatCount = 1
+        pulse.initialVelocity = 0.5
+        pulse.damping = 0.6
+        layer.add(pulse, forKey: "pulse")
+    }
+    func setGradientBackground() {
+        let colorTop = UIColor.white.withAlphaComponent(0.0).cgColor
+        let colorBottom = UIColor.white.cgColor
+        let gradientLayer = CAGradientLayer()
+        //gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.0)
+        //gradientLayer.endPoint = CGPoint(x: 0.0, y: 1.0)
+        gradientLayer.colors = [colorTop, colorBottom, colorBottom, colorTop]
+        gradientLayer.locations = [0.0, 0.4, 0.6, 1.0]
+        gradientLayer.frame = self.bounds
+        gradientLayer.masksToBounds = true
+        gradientLayer.cornerRadius = 22
+        //self.layer.addSublayer(gradientLayer)
+        self.layer.insertSublayer(gradientLayer, at: 0)
     }
 }
