@@ -31,6 +31,7 @@ class HorsesViewController: UIViewController {
     var disciplineDict: Dictionary<String, String> = [:]
     var originalCenter: CGPoint!
     var categoryAdd: String = ""
+    var rightBarButtons: [UIBarButtonItem] = []
     private lazy var stackBackgroundView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.FlatColor.Blue.Denim
@@ -92,13 +93,32 @@ class HorsesViewController: UIViewController {
         if let sVC = sender.source as? AddFavoriteHorseViewController {
             let newFavorites: [Horse] = sVC.favorites
             let newPersonal: [Horse] = sVC.personal
-            patchFavoritesToUser(newFavorites, newPersonal)
+            if !newFavorites.isEmpty {
+                fetchAndStoreAsFavorite(tid: newFavorites.map { $0.tid } , addToList: true, list: "favorite")
+                tableView.reloadData()
+                patchFavoritesToUser(true, newFavorites, "favorite")
+            }
+            if !newPersonal.isEmpty {
+                fetchAndStoreAsFavorite(tid: newPersonal.map { $0.tid }, addToList: true, list: "personal")
+                tableView.reloadData()
+                patchFavoritesToUser(true, newPersonal, "personal")
+            }
         }
     }
     
     // MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        DataRequest().getCoatColors(completion: {result -> () in
+            print("coat result: \(result)")
+            self.userDefault.setValue(result, forKey: "coatcolors")
+            print("coatColors: \(String(describing: self.userDefault.value(forKey: "coatcolors")))")
+        })
+        DataRequest().getStudbooks(completion: {result -> () in
+            print("stud result: \(result)")
+            self.userDefault.setValue(result, forKey: "studbooksStruct")
+            print("studbooks: \(String(describing: self.userDefault.value(forKey: "studbooksStruct")))")
+        })
         
         if let splitViewController = splitViewController {
             let controllers = splitViewController.viewControllers
@@ -166,6 +186,7 @@ class HorsesViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
+    
     // MARK: - setup Layout
     func setupLayout() {
         navigationItem.titleView?.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
@@ -192,7 +213,8 @@ class HorsesViewController: UIViewController {
         allHorsesButton.addLeftBorder(borderColor: UIColor.FlatColor.Gray.WhiteSmoke, borderWidth: 1.0)
         let actBarButton = UIBarButtonItem(customView: activityIndicator)
         navigationItem.setLeftBarButton(actBarButton, animated: true)
-        navigationItem.rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped)), UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(setTableToEdit))]
+        let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped))]
+        navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
         
         self.noFavoritesPopup.center = self.originalCenter
         self.noFavoritesPopup.layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
@@ -356,7 +378,7 @@ class HorsesViewController: UIViewController {
                             let userData: User = try JSONDecoder().decode(User.self, from: response.data!)
                             let favoriteHorses = userData.favHorses
                             let personalHorses = userData.perHorses
-                            success(favoriteHorses, personalHorses)
+                            success(favoriteHorses!, personalHorses!)
                         } catch {
                             print("Could not decode")
                         }
@@ -517,9 +539,12 @@ class HorsesViewController: UIViewController {
     }
     
     // MARK: Patch favorites to User
-    func patchFavoritesToUser(_ newFavorites: [Horse], _ newPersonal: [Horse]) {
+    func patchFavoritesToUser(_ add: Bool, _ newFavorites: [Horse], _ list: String) {
         // Try to post only the horse ID!!!
         if ConnectionCheck.isConnectedToNetwork() {
+            var newPatch: User?
+            var newUserFav: [User.FavHorses] = []
+            var newUserPer: [User.PerHorses] = []
             let username = userDefault.string(forKey: "Username")
             let password = getPasswordFromKeychain(username!)
             let credentialData = "\(username!):\(password)".data(using: String.Encoding.utf8)!
@@ -531,35 +556,43 @@ class HorsesViewController: UIViewController {
             requestToken(parameters: loginRequest, headers: headers, success: { (token) in
                 self.userDefault.set(token, forKey: "token")
                 print("Token successfully received!")
-                print("Token: \(token!)")
                 let uid = self.userDefault.value(forKey: "UID")
-                print("uid: \(uid!)")
-                
                 // fetch user data and collect existing favorite (and personal horses)
                 self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, success: { (favoriteHorses, personalHorses) in
-                    print("favos: \(favoriteHorses)")
-                    print("persos: \(personalHorses)")
-                    var newUserFav: [User.FavHorses] = favoriteHorses
-                    var newUserPer: [User.PerHorses] = personalHorses
                     
-                    // add new favorites to existing favorites
-                    if !newFavorites.isEmpty {
-                        for fav in newFavorites {
-                            newUserFav.append(User.FavHorses(id: fav.tid, type: "taxonomy_term", uuid: fav.uuid, url: "/taxonomy/term/\(fav.tid)"))
-                        }
-                    }
-                    if !newPersonal.isEmpty {
-                        for per in newPersonal {
-                            newUserPer.append(User.PerHorses(id: per.tid, type: "taxonomy_term", uuid: per.uuid, url: "/taxonomy/term/\(per.tid)"))
-                        }
-                        
-                    }
                     let firstname: [User.FirstName] = [User.FirstName(value: self.userDefault.value(forKey: "firstname") as! String)]
                     let surname: [User.SurName] = [User.SurName(value: self.userDefault.value(forKey: "surname") as! String)]
-                    let newPatch = User(firstName: firstname, surName: surname, favHorses: newUserFav, perHorses: newUserPer)
+                    if list == "favorite" {
+                        if add {
+                            newUserFav = favoriteHorses
+                        }
+                        // add new favorites to existing favorites
+                        if newFavorites.isEmpty {
+                            newUserFav = []
+                        } else {
+                            for fav in newFavorites {
+                                newUserFav.append(User.FavHorses(id: fav.tid, type: "taxonomy_term", uuid: fav.uuid, url: "/taxonomy/term/\(fav.tid)"))
+                            }
+                        }
+                        newPatch = User(firstName: firstname, surName: surname, favHorses: newUserFav, perHorses: nil)
+                    } else if list == "personal" {
+                        if add {
+                            newUserPer = personalHorses
+                        }
+                        if newFavorites.isEmpty {
+                            newUserPer = []
+                        } else {
+                            for per in newFavorites {
+                                newUserPer.append(User.PerHorses(id: per.tid, type: "taxonomy_term", uuid: per.uuid, url: "/taxonomy/term/\(per.tid)"))
+                            }
+                        }
+                        newPatch = User(firstName: firstname, surName: surname, favHorses: nil, perHorses: newUserPer)
+                    }
+                    
+                    
+                    
                     // Encode array of dictionaries to JSON
                     let encodedDataUserPatch = try? JSONEncoder().encode(newPatch)
-                    print("encoded favs: \(encodedDataUserPatch!)")
                     // patch user data with new favorite horses to field_favorite_horses
                     // Alamofire patch
                     let parameters = try? JSONSerialization.jsonObject(with: encodedDataUserPatch!) as? [String:Any]
@@ -621,9 +654,10 @@ class HorsesViewController: UIViewController {
                 if self.horses.isEmpty {
                     self.showNoResults(title: "No favorite horses", message: "You have not added any favorite horses yet.")
                 } else {
-                    for horse in self.horses {
-                        self.fetchAndStoreAsFavorite(tid: horse.tid, favorite: true, list: "favorite")
-                    }
+                    self.resetFavorites(bool: false, list: "favorite")
+                    let tids: Array<Int> = self.horses.map { $0.tid }
+                    self.fetchAndStoreAsFavorite(tid: tids, addToList: true, list: "favorite")
+                    
                     self.noFavoritesPopup.alpha = 0
                     self.tableView.reloadData()
                 }
@@ -656,9 +690,10 @@ class HorsesViewController: UIViewController {
                 if self.horses.isEmpty {
                     self.showNoResults(title: "No personal horses", message: "You have not added any personal horses yet.")
                 } else {
-                    for horse in self.horses {
-                        self.fetchAndStoreAsFavorite(tid: horse.tid, favorite: true, list: "personal")
-                    }
+                    self.resetFavorites(bool: false, list: "favorite")
+                    let tids: Array<Int> = self.horses.map { $0.tid }
+                    self.fetchAndStoreAsFavorite(tid: tids, addToList: true, list: "personal")
+                    
                     self.noFavoritesPopup.alpha = 0
                     self.tableView.reloadData()
                 }
@@ -838,7 +873,6 @@ class HorsesViewController: UIViewController {
                     scopeID = key
                 }
             }
-            print("scopeID: \(scopeID)")
             let doesCategoryMatch = (newScope == "All") || (horse.discipline.contains(scopeID))
             
             if searchBarIsEmpty() {
@@ -867,19 +901,16 @@ class HorsesViewController: UIViewController {
             results = try context.fetch(fetchRequest) as! [NSManagedObject]
             for result in results {
                 let horse = Horse(tid: result.value(forKey: "tid") as! Int, uuid: result.value(forKey: "uuid") as! String, name: result.value(forKey: "name") as! String, owner: result.value(forKey: "owner") as! String, birthDay: result.value(forKey: "birthday") as! String, studbook: result.value(forKey: "studbook") as! Array<String>, discipline: result.value(forKey: "discipline") as! Array<String>)
-                print("horse: \(horse)")
                 let exists: Bool = self.horses.contains { (h) -> Bool in
                     horse.tid == h.tid
                 }
                 if !exists {
                     self.horses.append(horse)
                 }
-                print("new list of horses: \(self.horses)")
             }
         } catch {
             print("error executing fetch request: \(error)")
         }
-        print("horses: \(self.horses)")
     }
     
     
@@ -901,17 +932,40 @@ class HorsesViewController: UIViewController {
         return entitiesCount > 0
     }
     
-    func fetchAndStoreAsFavorite(tid: Int, favorite: Bool, list: String) {
-        if doesEntityExist(tid: tid) {
-            updateFavorite(tid, favorite, list)
-            updateOthers(tid, false, list)
-        } else {
-            print("Entity does not exist")
+    func fetchAndStoreAsFavorite(tid: [Int], addToList: Bool, list: String) {
+        for t in tid {
+            if doesEntityExist(tid: t) {
+                updateFavorite(t, addToList, list)
+            } else {
+                print("Entity does not exist")
+            }
         }
     }
     
+    func fetchFavPerList(list: String) -> [Horse] {
+        var favPerHorses = [Horse]()
+        let context = appDelegate.persistentContainer.viewContext
+        
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
+        fetchRequest.predicate = NSPredicate(format: "\(list) == YES")
+        fetchRequest.includesSubentities = false
+        
+        var results: [NSManagedObject] = []
+        do {
+            results = try context.fetch(fetchRequest) as! [NSManagedObject]
+            for result in results {
+                let horse = Horse(tid: result.value(forKey: "tid") as! Int, uuid: result.value(forKey: "uuid") as! String, name: result.value(forKey: "name") as! String, owner: result.value(forKey: "owner") as! String, birthDay: result.value(forKey: "birthday") as! String, studbook: result.value(forKey: "studbook") as! Array<String>, discipline: result.value(forKey: "discipline") as! Array<String>)
+                favPerHorses.append(horse)
+            }
+        } catch {
+            print("Could not update: \(error)")
+        }
+        return favPerHorses
+    }
+    
+    
+    
     func updateFavorite(_ tid: Int, _ favorite: Bool, _ list: String) {
-        print("updateFavorite: \(tid)")
         let context = appDelegate.persistentContainer.viewContext
         
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
@@ -934,13 +988,11 @@ class HorsesViewController: UIViewController {
         }
     }
     
-    func updateOthers(_ tid: Int, _ favorite: Bool, _ list: String) {
+    func resetFavorites(bool: Bool, list: String) {
         let context = appDelegate.persistentContainer.viewContext
         
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
-        let predicate1 = NSPredicate(format: "tid != %d", tid)
-        let predicate2 = NSPredicate(format: "\(list) == YES")
-        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [predicate1, predicate2])
+        let predicate = NSPredicate(format: "\(list) == YES")
         fetchRequest.predicate = predicate
         fetchRequest.includesSubentities = false
         
@@ -948,7 +1000,7 @@ class HorsesViewController: UIViewController {
         do {
             results = try context.fetch(fetchRequest) as! [NSManagedObject]
             for result in results {
-                result.setValue(favorite, forKey: list)
+                result.setValue(bool, forKey: list)
             }
         } catch {
             print("Could not update: \(error)")
@@ -1028,22 +1080,20 @@ class HorsesViewController: UIViewController {
     @objc func addTapped() {
         if selected[0] || selected[1] {
             // Add horse to favo or personal
-            let vc = self.storyboard!.instantiateViewController(withIdentifier: "AddFavoriteHorseViewController") as! AddFavoriteHorseViewController
+            let mainStoryboard = UIStoryboard(name: "Main", bundle: Bundle.main)
+            let vc: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: "AddFavorite") as! AddFavoriteHorseViewController
             let navController = UINavigationController(rootViewController: vc)
             self.present(navController, animated: true, completion: nil)
             //present(AddFavoriteHorseViewController(), animated: true, completion: nil)
         } else {
             // Add a horse to the list
+            let mainStoryboard = UIStoryboard(name: "Main", bundle: Bundle.main)
+            let vc: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: "AddNewHorse") as! AddNewHorseViewController
+            let navController = UINavigationController(rootViewController: vc)
+            self.present(navController, animated: true, completion: nil)
         }
      }
     
-    @objc func setTableToEdit() {
-        if self.tableView.isEditing {
-            self.tableView.setEditing(false, animated: true)
-        } else {
-            self.tableView.setEditing(true, animated: true)
-        }
-    }
     
     // MARK: - prepare segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -1119,6 +1169,42 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
             cell.birthDay.text = ""
         }
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
+        if selected[0] || selected[1] {
+            return .delete
+        }
+        return .none
+        
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            // Quickly remove from tableview
+            print("list of horses before deleting: \(self.horses.map { $0.tid })")
+            let tid = self.horses[indexPath.row].tid
+            self.horses.remove(at: indexPath.row)
+            tableView.reloadData()
+            
+            
+            if selected[0] {
+                print("list of horses: \(self.horses.map { $0.tid })")
+                // Patch userdata with new list of favorites
+                self.resetFavorites(bool: false, list: "favorite")
+                self.patchFavoritesToUser(false, self.horses, "favorite")
+                // Adjust in Core Data
+                fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "favorite")
+            } else if selected[1] {
+                print("list of horses: \(self.horses.map { $0.tid })")
+                // Patch userdata with new list of favorites
+                self.resetFavorites(bool: false, list: "personal")
+                self.patchFavoritesToUser(false, self.horses, "personal")
+                // Adjust in Core Data
+                fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "personal")
+            }
+            
+        }
     }
 }
 

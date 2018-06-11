@@ -278,11 +278,46 @@ extension AddFavoriteHorseViewController: UITableViewDelegate, UITableViewDataSo
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             if indexPath.section == 0 {
+                // Delete the row from the data source
                 favorites.remove(at: indexPath.row)
+                // Delete the row from the tableview
+                tableView.deleteRows(at: [indexPath], with: .fade)
             } else {
+                // Delete the row from the data source
                 personal.remove(at: indexPath.row)
+                // Delete the row from the tableview
+                tableView.deleteRows(at: [indexPath], with: .fade)
             }
+            //tableView.reloadData()
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        if sourceIndexPath.section == 0 && destinationIndexPath.section == 1 {
+            let rowToMove = favorites[sourceIndexPath.row]
+            
+            if !personal.contains(where: {$0.tid == rowToMove.tid}) {
+                favorites.remove(at: sourceIndexPath.row)
+                personal.insert(rowToMove, at: destinationIndexPath.row)
+            } else {
+                tableView.reloadData()
+            }
+            
+        } else if sourceIndexPath.section == 1 && destinationIndexPath.section == 0 {
+            let rowToMove = personal[sourceIndexPath.row]
+            if !favorites.contains(where: {$0.tid == rowToMove.tid}) {
+                personal.remove(at: sourceIndexPath.row)
+                favorites.insert(rowToMove, at: destinationIndexPath.row)
+            } else {
+                tableView.reloadData()
+            }
+            
+        } else {
             tableView.reloadData()
         }
+    }
+    
+    func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        return true
     }
 }

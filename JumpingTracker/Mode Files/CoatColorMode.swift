@@ -1,23 +1,22 @@
 //
-//  YearMode.swift
+//  CoatColorMode.swift
 //  JumpingTracker
 //
-//  Created by Pieter Stragier on 31/05/2018.
+//  Created by Pieter Stragier on 11/06/2018.
 //  Copyright © 2018 Pieter Stragier. All rights reserved.
 //
 
 import Foundation
-import UIKit
 
-struct Years: Decodable {
+struct CoatColor: Decodable {
     var tid: [NumberID]
     var uuid: [UUID]
-    var year: [Year]
+    var name: [Name]
     
     enum CodingKeys: String, CodingKey {
         case tid
         case uuid
-        case year = "name"
+        case name
     }
     
     struct NumberID: Codable {
@@ -26,14 +25,17 @@ struct Years: Decodable {
     
     struct UUID: Codable {
         var value: String
-    }
-    
-    struct Year: Codable {
-        var year: String
         
         enum CodingKeys: String, CodingKey {
-            case year = "value"
+            case value
+        }
+    }
+    
+    struct Name: Codable {
+        var value: String
+        
+        enum CodingKeys: String, CodingKey {
+            case value
         }
     }
 }
-

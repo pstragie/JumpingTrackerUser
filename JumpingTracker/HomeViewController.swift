@@ -151,6 +151,42 @@ class HomeViewController: UIViewController {
         loginButton.alpha = 1.0
     }
     
+    func requestStudbooks() {
+        if ConnectionCheck.isConnectedToNetwork() {
+            self.opQueue.isSuspended = true
+            
+            print("requesting studbooks...")
+            dataRequest.getStudbooks(completion: { result -> () in
+                self.userDefault.set(result, forKey: "studbooksStruct")
+            })
+            
+            DispatchQueue.main.asyncAfter(deadline: self.time, execute: {[weak self] in
+                print("Opening the OperationQueue")
+                self?.opQueue.isSuspended = false
+            })
+        } else {
+            print("Not connected")
+        }
+    }
+    func requestCoatColors() {
+        if ConnectionCheck.isConnectedToNetwork() {
+            self.opQueue.isSuspended = true
+            
+            print("requesting coatcolors...")
+            dataRequest.getCoatColors(completion: { result -> () in
+                //print("coatColors received: \(result)")
+                self.userDefault.set(result, forKey: "coatcolors")
+            })
+            
+            DispatchQueue.main.asyncAfter(deadline: self.time, execute: {[weak self] in
+                print("Opening the OperationQueue")
+                self?.opQueue.isSuspended = false
+            })
+        } else {
+            print("Not connected")
+        }
+    }
+    
     
     func requestTaxonomies() {
         print("requesting taxonomies")
@@ -161,10 +197,9 @@ class HomeViewController: UIViewController {
             for tax in taxonomies {
                 print("get tax for \(tax)")
                 dataRequest.getTaxonomy("https://jumpingtracker.com/rest/export/json/\(tax)?_format=json", tax: tax, completion: { result -> () in
-                    // Update UI or store result
-                    
                     self.userDefault.set(result, forKey: tax)
                 })
+                
             }
             
             DispatchQueue.main.asyncAfter(deadline: self.time, execute: {[weak self] in
@@ -209,6 +244,8 @@ class HomeViewController: UIViewController {
                 print("Token: \(token!)")
                 print("uid: \(uid!)")
                 self.requestTaxonomies()
+                self.requestStudbooks()
+                self.requestCoatColors()
                 self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, success: { (firstname) in
                     print("firstname: \(firstname!)")
                     self.userDefault.set(firstname, forKey: "firstname")

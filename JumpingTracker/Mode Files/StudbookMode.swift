@@ -11,22 +11,28 @@ import UIKit
 
 struct Studbook: Decodable {
     var tid: [NumberID]
-    var studbook: [Studbook]
+    var uuid: [UUID]
+    var acro: [Acro]
     
     enum CodingKeys: String, CodingKey {
         case tid
-        case studbook = "field_acronyme"
+        case uuid
+        case acro = "field_acronyme"
     }
     
     struct NumberID: Codable {
         var value: Int
     }
     
-    struct Studbook: Codable {
-        var acro: String
+    struct UUID: Codable {
+        var value: String
+    }
+
+    struct Acro: Codable {
+        var value: String
         
         enum CodingKeys: String, CodingKey {
-            case acro = "value"
+            case value
         }
     }
 }

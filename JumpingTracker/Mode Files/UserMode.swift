@@ -12,8 +12,8 @@ import UIKit
 struct User: Codable {
     var firstName: [FirstName]
     var surName: [SurName]
-    var favHorses: [FavHorses]
-    var perHorses: [PerHorses]
+    var favHorses: [FavHorses]?
+    var perHorses: [PerHorses]?
     
     enum CodingKeys: String, CodingKey {
         case firstName = "field_firstname"

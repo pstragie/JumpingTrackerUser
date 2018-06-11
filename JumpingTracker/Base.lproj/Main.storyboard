@@ -137,7 +137,7 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="PQr-Ze-W5v"/>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Home" image="first" id="acW-dT-cKf" userLabel="Home"/>
+                    <tabBarItem key="tabBarItem" title="Home" image="tab_stable" id="acW-dT-cKf" userLabel="Home"/>
                     <connections>
                         <outlet property="activityIndicator" destination="NRD-i1-Ca0" id="HJj-lx-zUP"/>
                         <outlet property="firstView" destination="tsR-hK-woN" id="gja-e8-92s"/>
@@ -360,7 +360,7 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <viewLayoutGuide key="safeArea" id="XtZ-Ik-yYT"/>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Live" id="kO0-9z-487" userLabel="Live"/>
+                    <tabBarItem key="tabBarItem" title="Live" image="tab_live" id="kO0-9z-487" userLabel="Live"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="VDr-bQ-Xtl" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -373,13 +373,15 @@
                     <tabBar key="tabBar" contentMode="scaleToFill" id="W28-zg-YXA">
                         <rect key="frame" x="0.0" y="975" width="768" height="49"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="barTintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="selectedImageTintColor" red="0.58081901069999997" green="0.088427625600000004" blue="0.31863921880000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </tabBar>
                     <connections>
                         <segue destination="9pv-A4-QxB" kind="relationship" relationship="viewControllers" id="u7Y-xg-7CH"/>
                         <segue destination="8rJ-Kc-sve" kind="relationship" relationship="viewControllers" id="lzU-1b-eKA"/>
-                        <segue destination="0gb-Nm-mxs" kind="relationship" relationship="viewControllers" id="FgG-l8-eMG"/>
                         <segue destination="F5V-IA-nuU" kind="relationship" relationship="viewControllers" id="1GV-3v-BBg"/>
+                        <segue destination="0gb-Nm-mxs" kind="relationship" relationship="viewControllers" id="FgG-l8-eMG"/>
                     </connections>
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="HuB-VB-40B" sceneMemberID="firstResponder"/>
@@ -513,7 +515,7 @@
                                             <outlet property="horseName" destination="rFk-ul-0XN" id="TVT-WY-nee"/>
                                             <outlet property="horseOwner" destination="wzk-9s-evb" id="P7X-XF-Xtj"/>
                                             <outlet property="studbook" destination="wxP-rH-BuE" id="nfR-LB-f3U"/>
-                                            <segue destination="m0h-x0-LUn" kind="showDetail" identifier="showDetail" id="zcg-vd-u5W"/>
+                                            <segue destination="naM-hs-ToF" kind="showDetail" id="aIa-74-LqO"/>
                                         </connections>
                                     </tableViewCell>
                                 </prototypes>
@@ -691,6 +693,196 @@
             </objects>
             <point key="canvasLocation" x="1623" y="-321"/>
         </scene>
+        <!--Add a new horse-->
+        <scene sceneID="3Kv-38-dAO">
+            <objects>
+                <viewController storyboardIdentifier="AddNewHorse" id="fCr-hu-p14" customClass="AddNewHorseViewController" customModule="JumpingTracker" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="pw6-N3-f3H">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="FRy-aU-s99">
+                                <rect key="frame" x="17" y="105" width="45" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Birth year" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IqL-HN-g2B">
+                                <rect key="frame" x="16" y="139" width="74" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Father (sire)" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="9kt-ma-IHU">
+                                <rect key="frame" x="16" y="177" width="93" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Mother" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SOH-d6-PC4">
+                                <rect key="frame" x="17" y="213" width="56" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Studbook registration number" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ZXD-8e-6hK">
+                                <rect key="frame" x="17" y="324" width="229" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Current owner" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xy3-Tx-SAG">
+                                <rect key="frame" x="16" y="253" width="104" height="20"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Height (cm)" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xSM-88-vx8">
+                                <rect key="frame" x="16" y="291" width="91" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Deceased" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Jv3-AQ-lbj">
+                                <rect key="frame" x="17" y="744" width="77" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" translatesAutoresizingMaskIntoConstraints="NO" id="Z1k-5z-QiJ">
+                                <rect key="frame" x="87" y="392" width="200" height="29"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <segments>
+                                    <segment title="Gelding"/>
+                                    <segment title="Mare"/>
+                                    <segment title="Stallion"/>
+                                </segments>
+                            </segmentedControl>
+                            <pickerView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qK5-XH-d95">
+                                <rect key="frame" x="0.0" y="436" width="375" height="138"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="fCr-hu-p14" id="RKJ-mU-WHb"/>
+                                    <outlet property="delegate" destination="fCr-hu-p14" id="neR-PS-ejb"/>
+                                </connections>
+                            </pickerView>
+                            <pickerView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="B0U-mT-JLF">
+                                <rect key="frame" x="0.0" y="582" width="375" height="138"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="fCr-hu-p14" id="TTN-V0-1Bf"/>
+                                    <outlet property="delegate" destination="fCr-hu-p14" id="lCq-SH-Pai"/>
+                                </connections>
+                            </pickerView>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="qiA-AC-qRL">
+                                <rect key="frame" x="108" y="739" width="49" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </switch>
+                            <textField opaque="NO" tag="1" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Horse name" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="KVV-Z9-iYg">
+                                <rect key="frame" x="124" y="100" width="235" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences" autocorrectionType="no" spellCheckingType="no" returnKeyType="next"/>
+                            </textField>
+                            <textField opaque="NO" tag="2" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="e.g. 1972" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="QAm-6h-hnG">
+                                <rect key="frame" x="124" y="134" width="235" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="numbersAndPunctuation" returnKeyType="next" smartDashesType="no" smartInsertDeleteType="no" smartQuotesType="no"/>
+                            </textField>
+                            <textField opaque="NO" tag="3" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="(Autocompletes if present)" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="6sZ-YQ-3cj">
+                                <rect key="frame" x="124" y="172" width="235" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences" autocorrectionType="no" spellCheckingType="no" smartDashesType="no" smartInsertDeleteType="no" smartQuotesType="no"/>
+                            </textField>
+                            <textField opaque="NO" tag="4" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="(Autocompletes if present)" textAlignment="natural" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="WV9-I4-gyf">
+                                <rect key="frame" x="124" y="210" width="235" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences" autocorrectionType="no" spellCheckingType="no" smartDashesType="no" smartInsertDeleteType="no" smartQuotesType="no"/>
+                            </textField>
+                            <textField opaque="NO" tag="5" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Name of the owner(s)" textAlignment="natural" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="cic-Eq-M2A">
+                                <rect key="frame" x="124" y="248" width="235" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="words" autocorrectionType="no" spellCheckingType="no" smartDashesType="no" smartInsertDeleteType="no" smartQuotesType="no"/>
+                            </textField>
+                            <textField opaque="NO" tag="6" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="e.g. 162 (no decimals)" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="L4Q-gz-VIw">
+                                <rect key="frame" x="124" y="286" width="235" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
+                            </textField>
+                            <textField opaque="NO" tag="7" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="v3p-Br-tsb">
+                                <rect key="frame" x="16" y="353" width="343" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dGO-xI-pC6">
+                                <rect key="frame" x="209" y="740" width="150" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Submit"/>
+                                <connections>
+                                    <segue destination="14j-N4-1IT" kind="unwind" unwindAction="unwindSegueSave:" id="0o7-Qz-dD0"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="aYg-ED-If6"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Add a new horse" id="bjY-WB-hBC"/>
+                    <connections>
+                        <outlet property="GenderSegmentedControl" destination="Z1k-5z-QiJ" id="DrF-Hi-CQF"/>
+                        <outlet property="birthYearField" destination="QAm-6h-hnG" id="012-p1-iT5"/>
+                        <outlet property="coatColorPickerView" destination="B0U-mT-JLF" id="xAw-aY-RNs"/>
+                        <outlet property="deceasedSwitch" destination="qiA-AC-qRL" id="HDP-7X-GyD"/>
+                        <outlet property="fatherField" destination="6sZ-YQ-3cj" id="p6e-Bi-bm3"/>
+                        <outlet property="heightField" destination="L4Q-gz-VIw" id="n4E-z3-s3u"/>
+                        <outlet property="horseNameField" destination="KVV-Z9-iYg" id="Cre-sj-7nu"/>
+                        <outlet property="motherField" destination="WV9-I4-gyf" id="9sG-qe-WMW"/>
+                        <outlet property="ownerNameField" destination="cic-Eq-M2A" id="stw-Di-IF9"/>
+                        <outlet property="stubookRegistrationField" destination="v3p-Br-tsb" id="oh7-es-74t"/>
+                        <outlet property="studbookPickerView" destination="qK5-XH-d95" id="0Cq-2m-jZq"/>
+                        <outlet property="submitButton" destination="dGO-xI-pC6" id="C1e-hv-Rau"/>
+                        <outletCollection property="labels" destination="FRy-aU-s99" collectionClass="NSMutableArray" id="Ey3-ht-cCA"/>
+                        <outletCollection property="labels" destination="IqL-HN-g2B" collectionClass="NSMutableArray" id="ZGU-EE-Dvs"/>
+                        <outletCollection property="labels" destination="9kt-ma-IHU" collectionClass="NSMutableArray" id="iOe-3x-g67"/>
+                        <outletCollection property="labels" destination="SOH-d6-PC4" collectionClass="NSMutableArray" id="5cG-Lb-bKR"/>
+                        <outletCollection property="labels" destination="ZXD-8e-6hK" collectionClass="NSMutableArray" id="FSx-tv-WG6"/>
+                        <outletCollection property="labels" destination="xy3-Tx-SAG" collectionClass="NSMutableArray" id="F6j-aF-p26"/>
+                        <outletCollection property="labels" destination="xSM-88-vx8" collectionClass="NSMutableArray" id="Hdw-b6-Ims"/>
+                        <outletCollection property="labels" destination="Jv3-AQ-lbj" collectionClass="NSMutableArray" id="s9Q-dY-zrP"/>
+                        <outletCollection property="textFields" destination="KVV-Z9-iYg" collectionClass="NSMutableArray" id="SGH-9l-Lun"/>
+                        <outletCollection property="textFields" destination="QAm-6h-hnG" collectionClass="NSMutableArray" id="54F-v1-csl"/>
+                        <outletCollection property="textFields" destination="6sZ-YQ-3cj" collectionClass="NSMutableArray" id="NVL-uN-AGa"/>
+                        <outletCollection property="textFields" destination="WV9-I4-gyf" collectionClass="NSMutableArray" id="56x-T5-oyh"/>
+                        <outletCollection property="textFields" destination="cic-Eq-M2A" collectionClass="NSMutableArray" id="OCS-6z-YyK"/>
+                        <outletCollection property="textFields" destination="L4Q-gz-VIw" collectionClass="NSMutableArray" id="TCa-9d-jS6"/>
+                        <outletCollection property="textFields" destination="v3p-Br-tsb" collectionClass="NSMutableArray" id="Nnl-jG-KIr"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="b3K-AF-xeu" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="14j-N4-1IT" userLabel="Exit" sceneMemberID="exit"/>
+            </objects>
+            <point key="canvasLocation" x="3460" y="-1054.4334975369459"/>
+        </scene>
         <!--Add Favorite Horse-->
         <scene sceneID="Uq2-yk-him">
             <objects>
@@ -699,7 +891,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Use the searchbar in combination with the pickerwheel to select a horse." lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="Lwa-aF-PjE">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Use the searchbar in combination with the pickerwheel to select a horse." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="Lwa-aF-PjE">
                                 <rect key="frame" x="8" y="88" width="359" height="44"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="44" id="SUe-hr-i1u"/>
@@ -708,7 +900,7 @@
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <searchBar contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="vVP-9f-FNQ">
+                            <searchBar contentMode="redraw" searchBarStyle="minimal" placeholder="Start typing to filter" translatesAutoresizingMaskIntoConstraints="NO" id="vVP-9f-FNQ">
                                 <rect key="frame" x="0.0" y="132" width="375" height="56"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="56" id="rTU-jk-Dcg"/>
@@ -729,17 +921,19 @@
                                 </connections>
                             </pickerView>
                             <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" spacing="10" translatesAutoresizingMaskIntoConstraints="NO" id="tBu-9N-mfL">
-                                <rect key="frame" x="91.666666666666686" y="358" width="192" height="31"/>
+                                <rect key="frame" x="85.666666666666686" y="358" width="204" height="31"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BJL-ue-W0s">
-                                        <rect key="frame" x="0.0" y="0.0" width="91" height="31"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="97" height="31"/>
+                                        <inset key="contentEdgeInsets" minX="3" minY="0.0" maxX="3" maxY="0.0"/>
                                         <state key="normal" title="Add favorite"/>
                                         <connections>
                                             <action selector="AddToFavorites:" destination="spx-yN-Ako" eventType="touchUpInside" id="Egp-tJ-vl6"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Yw7-ay-vxP">
-                                        <rect key="frame" x="101" y="0.0" width="91" height="31"/>
+                                        <rect key="frame" x="107" y="0.0" width="97" height="31"/>
+                                        <inset key="contentEdgeInsets" minX="3" minY="0.0" maxX="3" maxY="0.0"/>
                                         <state key="normal" title="Add personal"/>
                                         <connections>
                                             <action selector="addToPersonal:" destination="spx-yN-Ako" eventType="touchUpInside" id="GA7-tV-JTH"/>
@@ -750,15 +944,16 @@
                                     <constraint firstAttribute="height" constant="31" id="WYd-0w-Tap"/>
                                 </constraints>
                             </stackView>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="BPz-Pn-7yZ">
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" showsVerticalScrollIndicator="NO" keyboardDismissMode="onDrag" dataMode="prototypes" style="plain" separatorStyle="none" allowsSelection="NO" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="32" sectionFooterHeight="28" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BPz-Pn-7yZ">
                                 <rect key="frame" x="8" y="397" width="359" height="381"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <prototypes>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="HorseTableCell" id="aaD-Ug-h30" customClass="HorseTableCell" customModule="JumpingTracker" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="28" width="359" height="44"/>
+                                        <rect key="frame" x="0.0" y="32" width="359" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="aaD-Ug-h30" id="0HF-oZ-Ebb">
-                                            <rect key="frame" x="0.0" y="0.0" width="359" height="43.666666666666664"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="359" height="44"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="b8q-Rb-4sb" userLabel="BGView">
@@ -896,7 +1091,7 @@
         <scene sceneID="TMX-b7-mkR">
             <objects>
                 <splitViewController title="SplitViewController" id="F5V-IA-nuU" userLabel="Split View Controller" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Horses" image="second" id="oYv-XO-Kki" userLabel="Horses"/>
+                    <tabBarItem key="tabBarItem" title="Horses" image="tab_horse_head_styled" id="oYv-XO-Kki" userLabel="Horses"/>
                     <connections>
                         <segue destination="baZ-Xy-Buf" kind="relationship" relationship="masterViewController" id="bZj-SY-wiy"/>
                         <segue destination="m0h-x0-LUn" kind="relationship" relationship="detailViewController" id="6hU-QR-k6A"/>
@@ -942,13 +1137,30 @@
             </objects>
             <point key="canvasLocation" x="2516" y="-321.42857142857144"/>
         </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="Fgd-C1-yTc">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="naM-hs-ToF" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="zvh-2c-obl">
+                        <rect key="frame" x="0.0" y="44" width="375" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="fCr-hu-p14" kind="relationship" relationship="rootViewController" id="zAN-DK-p4d"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="8EP-HU-O0q" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2516" y="-1054"/>
+        </scene>
     </scenes>
     <resources>
         <image name="HorseHeadHalf" width="123" height="240"/>
-        <image name="first" width="30" height="30"/>
         <image name="second" width="30" height="30"/>
+        <image name="tab_horse_head_styled" width="23" height="23"/>
+        <image name="tab_live" width="23" height="23"/>
+        <image name="tab_stable" width="23" height="23"/>
     </resources>
-    <inferredMetricsTieBreakers>
-        <segue reference="zcg-vd-u5W"/>
-    </inferredMetricsTieBreakers>
 </document>
