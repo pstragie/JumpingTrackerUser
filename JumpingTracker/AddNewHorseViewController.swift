@@ -7,11 +7,14 @@
 //
 
 import UIKit
+import CoreData
+import Foundation
 
 class AddNewHorseViewController: UIViewController {
 
-    var coatColors: [CoatColor]?
-    var studbooks: [Studbook]?
+    let appDelegate = UIApplication.shared.delegate as! AppDelegate
+    var coatColors: [CoatColors]?
+    var studbooks: [Studbooks]?
     //var studbookDict: Dictionary<String, String> = [:]
     let userDefault = UserDefaults.standard
     
@@ -37,9 +40,8 @@ class AddNewHorseViewController: UIViewController {
         coatColorPickerView.dataSource = self
         studbookPickerView.delegate = self
         studbookPickerView.dataSource = self
-        coatColors = userDefault.value(forKey: "coatcolors") as? [CoatColor]
-        studbooks = userDefault.value(forKey: "studbooksStruct") as? [Studbook]
-        //studbookDict = self.userDefault.value(forKey: "studbooks") as! Dictionary<String, String>
+        getCoatColors()
+        getStudbooks()
         setupPickerViews()
         // Do any additional setup after loading the view.
     }
@@ -54,6 +56,27 @@ class AddNewHorseViewController: UIViewController {
         
     }
     
+    func getCoatColors() {
+        let context = appDelegate.persistentContainer.viewContext
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreCoatColors")
+        do {
+            let results = try context.fetch(fetchRequest)
+            coatColors = results as? [CoatColors]
+        } catch {
+            print("Could not fetch Coat colors")
+        }
+        
+    }
+    func getStudbooks() {
+        let context = appDelegate.persistentContainer.viewContext
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreStudbooks")
+        do {
+            let results = try context.fetch(fetchRequest)
+            studbooks = results as? [Studbooks]
+        } catch {
+            print("Could not fetch Coat colors")
+        }
+    }
 
     /*
     // MARK: - Navigation
@@ -81,9 +104,9 @@ extension AddNewHorseViewController: UIPickerViewDelegate, UIPickerViewDataSourc
     
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         if pickerView == coatColorPickerView {
-            return self.coatColors![row].name.first?.value
+            return self.coatColors![row].name[0].value
         }
-        return self.studbooks![row].acro.first?.value
+        return self.studbooks![row].acro[0].value
     }
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {

@@ -7,26 +7,46 @@
 //
 
 import Foundation
-import UIKit
+import CoreData
 
-struct Disciplines: Decodable {
+struct Disciplines: Codable {
     var tid: [NumberID]
-    var discipline: [Discipline]
+    var uuid: [UUID]
+    var name: [Name]
     
     enum CodingKeys: String, CodingKey {
         case tid
-        case discipline = "name"
+        case uuid
+        case name
     }
     
     struct NumberID: Codable {
-        var value: Int
+        var value: Int32
     }
     
-    struct Discipline: Codable {
-        var name: String
-        
-        enum CodingKeys: String, CodingKey {
-            case name = "value"
+    struct UUID: Codable {
+        var value: String
+    }
+    
+    struct Name: Codable {
+        var value: String
+    }
+}
+
+extension Discipline {
+    
+    var allAtributes: Disciplines {
+        get {
+            let tid = Disciplines.NumberID(value: self.tid)
+            let uuid = Disciplines.UUID(value: self.uuid!)
+            let name = Disciplines.Name(value: self.name!)
+            
+            return Disciplines(tid: [tid], uuid: [uuid], name: [name])
+        }
+        set {
+            self.tid = (newValue.tid.first?.value)!
+            self.uuid = (newValue.uuid.first?.value)!
+            self.name = (newValue.name.first?.value)!
         }
     }
 }

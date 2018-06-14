@@ -11,7 +11,6 @@
 		B60E66D920C36F28008901C1 /* UserMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66D820C36F27008901C1 /* UserMode.swift */; };
 		B60E66DB20C47978008901C1 /* DisciplineMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DA20C47978008901C1 /* DisciplineMode.swift */; };
 		B60E66DE20C4A230008901C1 /* DataRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DD20C4A230008901C1 /* DataRequest.swift */; };
-		B60E66E020C60715008901C1 /* Horse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DF20C60715008901C1 /* Horse.swift */; };
 		B60E66E220C60E94008901C1 /* HorseDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */; };
 		B60E66E620C6199D008901C1 /* SearchFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66E520C6199C008901C1 /* SearchFooter.swift */; };
 		B6788AB120CDE32900E054BA /* AddNewHorseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6788AB020CDE32800E054BA /* AddNewHorseViewController.swift */; };
@@ -37,6 +36,9 @@
 		B68EE30A20C34C6E008C2FC5 /* KeychainPasswordItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30920C34C6E008C2FC5 /* KeychainPasswordItem.swift */; };
 		B698860B20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */; };
 		B698860E20CB6CA6002AFFC1 /* dataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B698860C20CB6CA6002AFFC1 /* dataModel.xcdatamodeld */; };
+		B6AD324B20D090C300C29912 /* GenderMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6AD324A20D090C300C29912 /* GenderMode.swift */; };
+		B6AD326F20D15F3B00C29912 /* EventTypeMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6AD326E20D15F3B00C29912 /* EventTypeMode.swift */; };
+		B6AD327220D1612300C29912 /* dataModel in Resources */ = {isa = PBXBuildFile; fileRef = B6AD327120D1612300C29912 /* dataModel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,7 +47,6 @@
 		B60E66D820C36F27008901C1 /* UserMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserMode.swift; sourceTree = "<group>"; };
 		B60E66DA20C47978008901C1 /* DisciplineMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisciplineMode.swift; sourceTree = "<group>"; };
 		B60E66DD20C4A230008901C1 /* DataRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataRequest.swift; sourceTree = "<group>"; };
-		B60E66DF20C60715008901C1 /* Horse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Horse.swift; sourceTree = "<group>"; };
 		B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorseDetailViewController.swift; sourceTree = "<group>"; };
 		B60E66E520C6199C008901C1 /* SearchFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFooter.swift; sourceTree = "<group>"; };
 		B6788AB020CDE32800E054BA /* AddNewHorseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNewHorseViewController.swift; sourceTree = "<group>"; };
@@ -73,6 +74,9 @@
 		B68EE30920C34C6E008C2FC5 /* KeychainPasswordItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainPasswordItem.swift; sourceTree = "<group>"; };
 		B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFavoriteHorseViewController.swift; sourceTree = "<group>"; };
 		B698860D20CB6CA6002AFFC1 /* dataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = dataModel.xcdatamodel; sourceTree = "<group>"; };
+		B6AD324A20D090C300C29912 /* GenderMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenderMode.swift; sourceTree = "<group>"; };
+		B6AD326E20D15F3B00C29912 /* EventTypeMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTypeMode.swift; sourceTree = "<group>"; };
+		B6AD327120D1612300C29912 /* dataModel */ = {isa = PBXFileReference; lastKnownFileType = folder; name = dataModel; path = "../../../../../../../../../Library/Developer/Xcode/DerivedData/JumpingTracker-cfsigggehjnlhifeulhymjsfwgcq/Build/Intermediates.noindex/JumpingTracker.build/Debug-iphonesimulator/JumpingTracker.build/DerivedSources/CoreDataGenerated/dataModel"; sourceTree = "<group>"; };
 		ECA3DB9B5F8F20F4BD1CAB00 /* Pods-JumpingTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JumpingTracker.release.xcconfig"; path = "Pods/Target Support Files/Pods-JumpingTracker/Pods-JumpingTracker.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -108,13 +112,16 @@
 		B60E66DC20C479C6008901C1 /* Mode Files */ = {
 			isa = PBXGroup;
 			children = (
+				B6AD327020D160E800C29912 /* CoreProperties */,
 				B68EE2F320BD6E7F008C2FC5 /* EventMode.swift */,
 				B60E66D820C36F27008901C1 /* UserMode.swift */,
 				B68EE2F920BF5B37008C2FC5 /* HorseMode.swift */,
 				B68EE2FB20BF6077008C2FC5 /* StudbookMode.swift */,
 				B68EE30120C02AC1008C2FC5 /* YearMode.swift */,
 				B60E66DA20C47978008901C1 /* DisciplineMode.swift */,
+				B6AD326E20D15F3B00C29912 /* EventTypeMode.swift */,
 				B6788AB220CDF66200E054BA /* CoatColorMode.swift */,
+				B6AD324A20D090C300C29912 /* GenderMode.swift */,
 			);
 			path = "Mode Files";
 			sourceTree = "<group>";
@@ -153,7 +160,6 @@
 				B68EE2DD20BD5B0C008C2FC5 /* Main.storyboard */,
 				B68EE2EC20BD5EA6008C2FC5 /* UIColor+FlatColors.swift */,
 				B68EE2EB20BD5EA5008C2FC5 /* UIColor+Hex.swift */,
-				B60E66DF20C60715008901C1 /* Horse.swift */,
 				B60E66E520C6199C008901C1 /* SearchFooter.swift */,
 				B68EE2EF20BD5EBD008C2FC5 /* ConnectionCheck.swift */,
 				B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */,
@@ -166,6 +172,14 @@
 				B698860C20CB6CA6002AFFC1 /* dataModel.xcdatamodeld */,
 			);
 			path = JumpingTracker;
+			sourceTree = "<group>";
+		};
+		B6AD327020D160E800C29912 /* CoreProperties */ = {
+			isa = PBXGroup;
+			children = (
+				B6AD327120D1612300C29912 /* dataModel */,
+			);
+			path = CoreProperties;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -227,6 +241,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B6AD327220D1612300C29912 /* dataModel in Resources */,
 				B68EE2E420BD5B22008C2FC5 /* LaunchScreen.storyboard in Resources */,
 				B68EE2E120BD5B22008C2FC5 /* Assets.xcassets in Resources */,
 				B68EE30820C20C6A008C2FC5 /* Snippets in Resources */,
@@ -265,8 +280,8 @@
 				B6788AB320CDF66200E054BA /* CoatColorMode.swift in Sources */,
 				B68EE2F020BD5EBE008C2FC5 /* ConnectionCheck.swift in Sources */,
 				B60E66E220C60E94008901C1 /* HorseDetailViewController.swift in Sources */,
+				B6AD324B20D090C300C29912 /* GenderMode.swift in Sources */,
 				B68EE30220C02AC1008C2FC5 /* YearMode.swift in Sources */,
-				B60E66E020C60715008901C1 /* Horse.swift in Sources */,
 				B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */,
 				B68EE2F420BD6E7F008C2FC5 /* EventMode.swift in Sources */,
 				B68EE2DC20BD5B0B008C2FC5 /* EventsViewController.swift in Sources */,
@@ -285,6 +300,7 @@
 				B68EE2FE20BF6165008C2FC5 /* HorsesViewController.swift in Sources */,
 				B60E66D920C36F28008901C1 /* UserMode.swift in Sources */,
 				B68EE2DA20BD5B0B008C2FC5 /* HomeViewController.swift in Sources */,
+				B6AD326F20D15F3B00C29912 /* EventTypeMode.swift in Sources */,
 				B698860B20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift in Sources */,
 				B68EE2FA20BF5B37008C2FC5 /* HorseMode.swift in Sources */,
 			);

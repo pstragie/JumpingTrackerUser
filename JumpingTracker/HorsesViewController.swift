@@ -16,15 +16,16 @@ class HorsesViewController: UIViewController {
     
     // MARK: - Variables
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
+    let opQueue: OperationQueue = OperationQueue()
     var horseDetailViewController: HorseDetailViewController? = nil
     let userDefault = UserDefaults.standard
     let searchController = UISearchController(searchResultsController: nil)
-    var filteredHorses = [Horse]()
-    var horses = [Horse]()
-    var allHorses = [Horse]()
-    var favoriteHorses = Array<Horse>()
-    var personalHorses = Array<Horse>()
-    var jumpingHorses = Array<Horse>()
+    var filteredHorses = [Horses]()
+    var horses: [Horses] = []
+    var allHorses = [Horses]()
+    var favoriteHorses = Array<Horses>()
+    var personalHorses = Array<Horses>()
+    var jumpingHorses = Array<Horses>()
     var selected: Array<Bool> = [false, false, false]
     var studbookDict: Dictionary<String, String> = [:]
     var yearDict: Dictionary<String, String> = [:]
@@ -38,6 +39,8 @@ class HorsesViewController: UIViewController {
         return view
     }()
     
+    var allCoatColors = [CoatColors]()
+    var allStudbooks = [Studbooks]()
     // MARK: - Outlets
 
     @IBOutlet weak var notLoggedInPopupView: UIView!
@@ -91,15 +94,15 @@ class HorsesViewController: UIViewController {
     @IBAction func unwindSegueSave(_ sender: UIStoryboardSegue) {
         // Post and request new data
         if let sVC = sender.source as? AddFavoriteHorseViewController {
-            let newFavorites: [Horse] = sVC.favorites
-            let newPersonal: [Horse] = sVC.personal
+            let newFavorites: [Horses] = sVC.favorites
+            let newPersonal: [Horses] = sVC.personal
             if !newFavorites.isEmpty {
-                fetchAndStoreAsFavorite(tid: newFavorites.map { $0.tid } , addToList: true, list: "favorite")
+                fetchAndStoreAsFavorite(tid: newFavorites.map { ($0.tid.first?.value)! } , addToList: true, list: "favorite")
                 tableView.reloadData()
                 patchFavoritesToUser(true, newFavorites, "favorite")
             }
             if !newPersonal.isEmpty {
-                fetchAndStoreAsFavorite(tid: newPersonal.map { $0.tid }, addToList: true, list: "personal")
+                fetchAndStoreAsFavorite(tid: newPersonal.map { ($0.tid.first?.value)! }, addToList: true, list: "personal")
                 tableView.reloadData()
                 patchFavoritesToUser(true, newPersonal, "personal")
             }
@@ -109,17 +112,7 @@ class HorsesViewController: UIViewController {
     // MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        DataRequest().getCoatColors(completion: {result -> () in
-            print("coat result: \(result)")
-            self.userDefault.setValue(result, forKey: "coatcolors")
-            print("coatColors: \(String(describing: self.userDefault.value(forKey: "coatcolors")))")
-        })
-        DataRequest().getStudbooks(completion: {result -> () in
-            print("stud result: \(result)")
-            self.userDefault.setValue(result, forKey: "studbooksStruct")
-            print("studbooks: \(String(describing: self.userDefault.value(forKey: "studbooksStruct")))")
-        })
-        
+        print("view did load horseviewController")
         if let splitViewController = splitViewController {
             let controllers = splitViewController.viewControllers
             horseDetailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? HorseDetailViewController
@@ -129,12 +122,12 @@ class HorsesViewController: UIViewController {
         // Setup the scope bar
         setupSearchController()
         setupPopup()
-        
+        getHorseData() // preload with existing horses in CoreHorses
+        // Synchronize with online horse data
+        requestHorseData()
+    
         // Do any additional setup after loading the view, typically from a nib.
-        yearDict = self.userDefault.object(forKey: "jaartallen") as? Dictionary<String, String> ?? ["":""]
-        studbookDict = self.userDefault.object(forKey: "studbooks") as? Dictionary<String, String> ?? ["":""]
-        disciplineDict = self.userDefault.object(forKey: "disciplines") as? Dictionary<String, String> ?? ["":""]
-        checkTaxDicts()
+        
         setupNavBar()
         setupLayout()
         configureTableView()
@@ -149,35 +142,7 @@ class HorsesViewController: UIViewController {
         super.viewWillAppear(animated)
         notLoggedInPopup.alpha = 0
         noFavoritesPopup.alpha = 0
-        preloadCoreData()
-        self.tableView.reloadData()
-        if selected[0] {
-            // request favorites
-            favoriteHorsesButtonClicked()
-        } else if selected[1] {
-            // request personal
-            personalHorsesButtonClicked()
-        } else {
-            
-            requestHorseData("https://jumpingtracker.com/rest/export/json/horses?_format=json", completion: { (result) in
-                self.horses = result
-                self.tableView.reloadData()
-                self.progressView.isHidden = true
-                self.syncLabel.isHidden = true
-                self.activityIndicator.isHidden = true
-                self.progressView.progress = 0.0
-                if self.horses.isEmpty {
-                    self.tableView.isHidden = true
-                } else {
-                    self.tableView.isHidden = false
-                }
-                print("storing data in Core Data...")
-                for horse in result {
-                    self.storeHorseInCoreData(horse)
-                }
-                print("finished storing data in Core Data!")
-            })
-        }
+        
     }
     
 
@@ -186,7 +151,152 @@ class HorsesViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
+    // MARK: - get data
+    func getHorseData() {
+        if selected[0] {
+            // request favorites
+            favoriteHorsesButtonClicked()
+        } else if selected[1] {
+            // request personal
+            personalHorsesButtonClicked()
+        } else {
+            preloadCoreData()
+        }
+    }
     
+    func requestHorseData() {
+        let blockOperation = BlockOperation {
+            self.requestHorseData("https://jumpingtracker.com/rest/export/json/horses?_format=json", completion: { (result) in
+                self.horses = result
+                print("Result from requestHorseData arrived:")
+                Thread.printCurrent()
+                self.appDelegate.persistentContainer.performBackgroundTask({ (context) in
+                    print("storing data in Core Data...")
+                    // Store in core data
+                    Thread.printCurrent()
+                    for items in result {
+                        
+                        let horse: Horse = NSEntityDescription.insertNewObject(forEntityName: "CoreHorses", into: context) as! Horse
+                        horse.allAtributes = items
+                    }
+                    do {
+                        try context.save()
+                        print("finished storing data in Core Data!")
+                    } catch {
+                        print("Could not save in privateQueue!")
+                    }
+                })
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    self.progressView.isHidden = true
+                    self.syncLabel.isHidden = true
+                    self.activityIndicator.isHidden = true
+                    self.progressView.progress = 0.0
+                    if self.horses.isEmpty {
+                        self.tableView.isHidden = true
+                    } else {
+                        self.tableView.isHidden = false
+                    }
+                }
+            })
+                
+        }
+        
+        opQueue.addOperation(blockOperation)
+        
+        
+    }
+
+    // MARK: request horse data
+    func requestHorseData(_ urlString: String, completion: @escaping ([Horses]) -> ()) {
+        /// function to get taxonomies from CMS
+        print("requesting horse data")
+        Thread.printCurrent()
+        if ConnectionCheck.isConnectedToNetwork() {
+            
+            let username = "swift_username_request_data"
+            let password = "JTIsabelle29?"
+            
+            let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
+            let base64Credentials = credentialData.base64EncodedString(options: [])
+            let headers: Dictionary<String, String> = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+            
+            Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
+                .downloadProgress { (progress) in
+                    self.progressView.progress = Float(progress.fractionCompleted)
+                }
+                .validate(statusCode: 200..<300)
+                .validate(contentType: ["application/json"])
+                
+                .responseData(completionHandler: { (response) in
+                    if response.result.value == nil {
+                        print("No response")
+                        // Show alertmessage
+                        let alertController = UIAlertController(title: NSLocalizedString("No response from server", comment: ""), message: NSLocalizedString("You are probably not connected to the internet. Latest data will not be available.", comment: ""), preferredStyle: .alert)
+                        let actionOK = UIAlertAction(title: NSLocalizedString("OK", comment: "OK in alert no internet"), style: .default, handler: nil)
+                        let actionSettings = UIAlertAction(title: NSLocalizedString("Settings", comment: "Settings in alert no internet"), style: .default) { (_) -> Void in
+                            guard let settingsUrl = URL(string: UIApplicationOpenSettingsURLString) else { return }
+                            if UIApplication.shared.canOpenURL(settingsUrl) {
+                                UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
+                                    print("Settings opened: \(success)")
+                                })
+                            }
+                        }
+                        alertController.addAction(actionOK)
+                        alertController.addAction(actionSettings)
+                        
+                        self.present(alertController, animated: true, completion: nil)
+                        completion(self.horses)
+                    }
+                    switch(response.result) {
+                    case .success:
+                        if response.result.value != nil {
+                            do {
+                                let horses: [Horses] = try JSONDecoder().decode([Horses].self, from: response.data!)
+                                
+                                completion(horses)
+                                print("horses decoded")
+                            } catch {
+                                print("Could not decode horses: \(error)")
+                            }
+                        }
+                        break
+                    case .failure(let error):
+                        print("Request to authenticate failed with error: \(error)")
+                        break
+                    }
+                })
+            
+            DispatchQueue.main.async {
+                self.activityIndicator.isHidden = false
+                self.progressView.isHidden = false
+                self.syncLabel.isHidden = false
+                self.progressView.progress = 0.0
+            }
+            
+        } else {
+            print("No internet connection")
+            // Show alertmessage
+            DispatchQueue.main.async {
+                let alertController = UIAlertController(title: NSLocalizedString("No response from server", comment: ""), message: NSLocalizedString("You are probably not connected to the internet. Showing previous data.", comment: ""), preferredStyle: .alert)
+                let actionOK = UIAlertAction(title: NSLocalizedString("OK", comment: "OK in alert no internet"), style: .default, handler: nil)
+                let actionSettings = UIAlertAction(title: NSLocalizedString("Settings", comment: "Settings in alert no internet"), style: .default) { (_) -> Void in
+                    guard let settingsUrl = URL(string: UIApplicationOpenSettingsURLString) else { return }
+                    if UIApplication.shared.canOpenURL(settingsUrl) {
+                        UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
+                            print("Settings opened: \(success)")
+                        })
+                    }
+                }
+                alertController.addAction(actionOK)
+                alertController.addAction(actionSettings)
+                
+                self.present(alertController, animated: true, completion: nil)
+            }
+        }
+        
+    }
+
     // MARK: - setup Layout
     func setupLayout() {
         navigationItem.titleView?.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
@@ -372,15 +482,15 @@ class HorsesViewController: UIViewController {
                 case .success:
                     print("data: \(response.data!)")
                     if response.result.value != nil {
-                        print("Response: \(response)")
                     
                         do {
                             let userData: User = try JSONDecoder().decode(User.self, from: response.data!)
                             let favoriteHorses = userData.favHorses
                             let personalHorses = userData.perHorses
                             success(favoriteHorses!, personalHorses!)
+                            print("userdata decoded")
                         } catch {
-                            print("Could not decode")
+                            print("Could not decode userdata")
                         }
                     }
                     break
@@ -389,157 +499,14 @@ class HorsesViewController: UIViewController {
                     failure(error)
                     break
                 }
-                guard case let .failure(error) = response.result else { return }
-                
-                if let error = error as? AFError {
-                    switch error {
-                    case .invalidURL(let url):
-                        print("Invalid URL: \(url) - \(error.localizedDescription)")
-                    case .parameterEncodingFailed(let reason):
-                        print("Parameter encoding failed: \(error.localizedDescription)")
-                        print("Failure Reason: \(reason)")
-                    case .multipartEncodingFailed(let reason):
-                        print("Multipart encoding failed: \(error.localizedDescription)")
-                        print("Failure Reason: \(reason)")
-                    case .responseValidationFailed(let reason):
-                        print("Response validation failed: \(error.localizedDescription)")
-                        print("Failure Reason: \(reason)")
-                        switch reason {
-                        case .dataFileNil, .dataFileReadFailed:
-                            print("Downlaoded file could not be read")
-                        case .missingContentType(let acceptableContentTypes):
-                            print("Content Type Missing: \(acceptableContentTypes)")
-                        case .unacceptableContentType(let acceptableContentTypes, let responseContentType):
-                            print("Response content type: \(responseContentType) was uncacceptable: \(acceptableContentTypes)")
-                        case .unacceptableStatusCode(let code):
-                            print("Response status code was unacceptable: \(code)")
-                        }
-                    case .responseSerializationFailed(let reason):
-                        print("Response serialization failed: \(error.localizedDescription)")
-                        print("Failure Reason: \(reason)")
-                    }
-                    print("Underlying error: \(String(describing: error.underlyingError))")
-                } else if let error = error as? URLError {
-                    print("URLError occurred: \(error)")
-                } else {
-                    print("Unknown error: \(error)")
-                }
-                
-                
-        }
-    }
-    // MARK: check taxonomy dictionaries
-    func checkTaxDicts() {
-        print("Checking taxonomy dictionaries...")
-        let taxos = ["jaartallen", "studbooks", "disciplines"]
-        for tax in taxos {
-            if (self.userDefault.object(forKey: tax) == nil) || ((self.userDefault.object(forKey: tax) as? Dictionary<String, String>)?.isEmpty)! {
-                DataRequest().getTaxonomy("https://jumpingtracker.com/rest/export/json/\(tax)?_format=json", tax: tax, completion: { result -> () in
-                    // Update UI or store result
-                    self.userDefault.set(result, forKey: tax)
-                })
-            }
         }
     }
     
-    // MARK: request horse data
-    func requestHorseData(_ urlString: String, completion: @escaping (Array<Horse>) -> ()) {
-        /// function to get taxonomies from CMS
-        print("requesting horse data")
-        if ConnectionCheck.isConnectedToNetwork() {
-            activityIndicator.isHidden = false
-            progressView.isHidden = false
-            syncLabel.isHidden = false
-            progressView.progress = 0.0
-            let username = "swift_username_request_data"
-            let password = "JTIsabelle29?"
-            
-            let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
-            let base64Credentials = credentialData.base64EncodedString(options: [])
-            let headers: Dictionary<String, String> = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-            
-            var result: [Horse] = []
-            Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
-                .downloadProgress { (progress) in
-                    self.progressView.progress = Float(progress.fractionCompleted)
-                }
-                .responseJSON { (response) in
-                    if response.result.value == nil {
-                        print("No response")
-                        // Show alertmessage
-                        let alertController = UIAlertController(title: NSLocalizedString("No response from server", comment: ""), message: NSLocalizedString("You are probably not connected to the internet. Latest data will not be available.", comment: ""), preferredStyle: .alert)
-                        let actionOK = UIAlertAction(title: NSLocalizedString("OK", comment: "OK in alert no internet"), style: .default, handler: nil)
-                        let actionSettings = UIAlertAction(title: NSLocalizedString("Settings", comment: "Settings in alert no internet"), style: .default) { (_) -> Void in
-                            guard let settingsUrl = URL(string: UIApplicationOpenSettingsURLString) else { return }
-                            if UIApplication.shared.canOpenURL(settingsUrl) {
-                                UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
-                                    print("Settings opened: \(success)")
-                                })
-                            }
-                        }
-                        alertController.addAction(actionOK)
-                        alertController.addAction(actionSettings)
-                        
-                        self.present(alertController, animated: true, completion: nil)
-                        completion(self.horses)
-                    }
-                    switch(response.result) {
-                    case .success(let value):
-                        let swiftyJSON = JSON(value)
-                        for item in swiftyJSON {
-                            var studids: Array<String> = []
-                            var discids: Array<String> = []
-                            let (_, dict) = item
-                            let tid: Int = Int(dict["tid"][0]["value"].intValue)
-                            let uuid: String = String(dict["uuid"][0]["value"].stringValue)
-                            let horseN: String = String(dict["name"][0]["value"].stringValue)
-                            let horseO: String = String(dict["field_current_owner"][0]["value"].stringValue)
-                            let birthD: String = String(dict["field_birth_year"][0]["target_id"].intValue)
-                            //let deceased: Bool = dict["field_deceased"][0]["value"].boolValue
-                            for arrayStuds in dict["field_studbook"] {
-                                let (_, dictstud) = arrayStuds
-                                let studid: String = String(dictstud["target_id"].intValue)
-                                studids.append(studid)
-                            }
-                            for arrayDisc in dict["field_discipline"] {
-                                let (_, dictdisc) = arrayDisc
-                                let discid: String = String(dictdisc["target_id"].intValue)
-                                discids.append(discid)
-                            }
-                            let H = Horse(tid: tid, uuid: uuid, name: horseN, owner: horseO, birthDay: birthD, studbook: studids, discipline: discids)
-                            result.append(H)
-                        }
-                        // Store Date() latest synchronization
-                        self.userDefault.set(Date(), forKey: "LastHorsesSynchronization")
-                    case .failure(let error):
-                        print("Request to authenticate failed with error: \(error)")
-                    }
-                    completion(result)
-            }
-            
-        } else {
-            print("No internet connection")
-            // Show alertmessage
-            let alertController = UIAlertController(title: NSLocalizedString("No response from server", comment: ""), message: NSLocalizedString("You are probably not connected to the internet. Showing previous data.", comment: ""), preferredStyle: .alert)
-            let actionOK = UIAlertAction(title: NSLocalizedString("OK", comment: "OK in alert no internet"), style: .default, handler: nil)
-            let actionSettings = UIAlertAction(title: NSLocalizedString("Settings", comment: "Settings in alert no internet"), style: .default) { (_) -> Void in
-                guard let settingsUrl = URL(string: UIApplicationOpenSettingsURLString) else { return }
-                if UIApplication.shared.canOpenURL(settingsUrl) {
-                    UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
-                        print("Settings opened: \(success)")
-                    })
-                }
-            }
-            alertController.addAction(actionOK)
-            alertController.addAction(actionSettings)
-            
-            self.present(alertController, animated: true, completion: nil)
-        }
-        
-    }
+    
+    
     
     // MARK: Patch favorites to User
-    func patchFavoritesToUser(_ add: Bool, _ newFavorites: [Horse], _ list: String) {
+    func patchFavoritesToUser(_ add: Bool, _ newFavorites: [Horses], _ list: String) {
         // Try to post only the horse ID!!!
         if ConnectionCheck.isConnectedToNetwork() {
             var newPatch: User?
@@ -571,7 +538,7 @@ class HorsesViewController: UIViewController {
                             newUserFav = []
                         } else {
                             for fav in newFavorites {
-                                newUserFav.append(User.FavHorses(id: fav.tid, type: "taxonomy_term", uuid: fav.uuid, url: "/taxonomy/term/\(fav.tid)"))
+                                newUserFav.append(User.FavHorses(id: Int((fav.tid.first?.value)!), type: "taxonomy_term", uuid: (fav.uuid.first?.value)!, url: "/taxonomy/term/\((fav.tid.first?.value)!)"))
                             }
                         }
                         newPatch = User(firstName: firstname, surName: surname, favHorses: newUserFav, perHorses: nil)
@@ -583,7 +550,7 @@ class HorsesViewController: UIViewController {
                             newUserPer = []
                         } else {
                             for per in newFavorites {
-                                newUserPer.append(User.PerHorses(id: per.tid, type: "taxonomy_term", uuid: per.uuid, url: "/taxonomy/term/\(per.tid)"))
+                                newUserPer.append(User.PerHorses(id: Int((per.tid.first?.value)!), type: "taxonomy_term", uuid: (per.uuid.first?.value)!, url: "/taxonomy/term/\((per.tid.first?.value)!)"))
                             }
                         }
                         newPatch = User(firstName: firstname, surName: surname, favHorses: nil, perHorses: newUserPer)
@@ -655,7 +622,11 @@ class HorsesViewController: UIViewController {
                     self.showNoResults(title: "No favorite horses", message: "You have not added any favorite horses yet.")
                 } else {
                     self.resetFavorites(bool: false, list: "favorite")
-                    let tids: Array<Int> = self.horses.map { $0.tid }
+                    
+                    var tids: Array<Int32> = []
+                    for h in self.horses {
+                        tids.append(Int32(h.tid[0].value))
+                    }
                     self.fetchAndStoreAsFavorite(tid: tids, addToList: true, list: "favorite")
                     
                     self.noFavoritesPopup.alpha = 0
@@ -691,7 +662,10 @@ class HorsesViewController: UIViewController {
                     self.showNoResults(title: "No personal horses", message: "You have not added any personal horses yet.")
                 } else {
                     self.resetFavorites(bool: false, list: "favorite")
-                    let tids: Array<Int> = self.horses.map { $0.tid }
+                    var tids: Array<Int32> = []
+                    for h in self.horses {
+                        tids.append(h.tid[0].value)
+                    }
                     self.fetchAndStoreAsFavorite(tid: tids, addToList: true, list: "personal")
                     
                     self.noFavoritesPopup.alpha = 0
@@ -829,22 +803,6 @@ class HorsesViewController: UIViewController {
         tableView.isUserInteractionEnabled = true
     }
     
-    // MARK: fill Jumping Horses array
-    func fillJumpingHorsesArray() {
-        var jumpingTid: String = ""
-        for (tid, disc) in self.disciplineDict {
-            if disc == "Show jumping" {
-                jumpingTid = tid
-            }
-        }
-        for horse in horses {
-            let d = horse.discipline
-            
-            if d.contains(jumpingTid) {
-                jumpingHorses.append(horse)
-            }
-        }
-    }
     
     // MARK: search bar empty?
     func searchBarIsEmpty() -> Bool {
@@ -860,7 +818,7 @@ class HorsesViewController: UIViewController {
     
     // MARK: filter content for search text
     func filterContentForSearchText(_ searchText: String, scope: String = "All") {
-        filteredHorses = horses.filter({( horse : Horse) -> Bool in
+        filteredHorses = horses.filter({( horse : Horses) -> Bool in
             var newScope: String = ""
             if scope == "Jumping" {
                 newScope = "Show jumping"
@@ -873,12 +831,17 @@ class HorsesViewController: UIViewController {
                     scopeID = key
                 }
             }
-            let doesCategoryMatch = (newScope == "All") || (horse.discipline.contains(scopeID))
+            var discNameArray: Array<String> = []
+            for discID in (horse.discipline?.map { $0.id })! {
+                let discName = getName("CoreDisciplines", Int(discID), "name")
+                discNameArray.append(discName)
+            }
+            let doesCategoryMatch = (newScope == "All") || discNameArray.contains(scopeID)
             
             if searchBarIsEmpty() {
                 return doesCategoryMatch
             } else {
-                return doesCategoryMatch && horse.name.lowercased().contains(searchText.lowercased())
+                return doesCategoryMatch && (horse.name.first?.value.lowercased().contains(searchText.lowercased()))!
             }
         })
         tableView.reloadData()
@@ -895,18 +858,12 @@ class HorsesViewController: UIViewController {
             fetchRequest.predicate = NSPredicate(format: "personal == YES")
         }
         fetchRequest.includesSubentities = false
-        var results: [NSManagedObject] = []
-        self.horses = []
+        
         do {
-            results = try context.fetch(fetchRequest) as! [NSManagedObject]
-            for result in results {
-                let horse = Horse(tid: result.value(forKey: "tid") as! Int, uuid: result.value(forKey: "uuid") as! String, name: result.value(forKey: "name") as! String, owner: result.value(forKey: "owner") as! String, birthDay: result.value(forKey: "birthday") as! String, studbook: result.value(forKey: "studbook") as! Array<String>, discipline: result.value(forKey: "discipline") as! Array<String>)
-                let exists: Bool = self.horses.contains { (h) -> Bool in
-                    horse.tid == h.tid
-                }
-                if !exists {
-                    self.horses.append(horse)
-                }
+            let result = try context.fetch(fetchRequest)
+            for data in result as! [Horse] {
+                let horse: Horses = data.allAtributes
+                self.horses.append(horse)
             }
         } catch {
             print("error executing fetch request: \(error)")
@@ -932,29 +889,27 @@ class HorsesViewController: UIViewController {
         return entitiesCount > 0
     }
     
-    func fetchAndStoreAsFavorite(tid: [Int], addToList: Bool, list: String) {
+    func fetchAndStoreAsFavorite(tid: [Int32], addToList: Bool, list: String) {
         for t in tid {
-            if doesEntityExist(tid: t) {
-                updateFavorite(t, addToList, list)
+            if doesEntityExist(tid: Int(t)) {
+                updateFavorite(Int(t), addToList, list)
             } else {
                 print("Entity does not exist")
             }
         }
     }
     
-    func fetchFavPerList(list: String) -> [Horse] {
-        var favPerHorses = [Horse]()
+    func fetchFavPerList(list: String) -> [Horses] {
+        var favPerHorses: [Horses] = []
         let context = appDelegate.persistentContainer.viewContext
         
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
         fetchRequest.predicate = NSPredicate(format: "\(list) == YES")
         fetchRequest.includesSubentities = false
         
-        var results: [NSManagedObject] = []
         do {
-            results = try context.fetch(fetchRequest) as! [NSManagedObject]
-            for result in results {
-                let horse = Horse(tid: result.value(forKey: "tid") as! Int, uuid: result.value(forKey: "uuid") as! String, name: result.value(forKey: "name") as! String, owner: result.value(forKey: "owner") as! String, birthDay: result.value(forKey: "birthday") as! String, studbook: result.value(forKey: "studbook") as! Array<String>, discipline: result.value(forKey: "discipline") as! Array<String>)
+            let results = try context.fetch(fetchRequest)
+            for horse in results as! [Horses] {
                 favPerHorses.append(horse)
             }
         } catch {
@@ -1012,7 +967,7 @@ class HorsesViewController: UIViewController {
         }
     }
     
-    func updateAttributes(_ horse: Horse) {
+    func updateAttributes(_ horse: Horses) {
         let context = appDelegate.persistentContainer.viewContext
         
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
@@ -1024,7 +979,7 @@ class HorsesViewController: UIViewController {
             results = try context.fetch(fetchRequest) as! [NSManagedObject]
             let result = results.first
             result?.setValue(horse.name, forKey: "name")
-            result?.setValue(horse.birthDay, forKey: "birthday")
+            result?.setValue(horse.birthday, forKey: "birthday")
             result?.setValue(horse.owner, forKey: "owner")
             result?.setValue(horse.discipline, forKey: "discipline")
             result?.setValue(horse.studbook, forKey: "studbook")
@@ -1038,30 +993,7 @@ class HorsesViewController: UIViewController {
             print("Failed saving")
         }
     }
-    func storeHorseInCoreData(_ horse: Horse) {
-        let context = appDelegate.persistentContainer.viewContext
-        if doesEntityExist(tid: horse.tid) {
-            // fetch and update
-            updateAttributes(horse)
-        } else {
-            // add
-            let entity = NSEntityDescription.entity(forEntityName: "CoreHorses", in: context)
-            let newHorse = NSManagedObject(entity: entity!, insertInto: context)
-            newHorse.setValue(horse.tid, forKey: "tid")
-            newHorse.setValue(horse.uuid, forKey: "uuid")
-            newHorse.setValue(horse.name, forKey: "name")
-            newHorse.setValue(horse.owner, forKey: "owner")
-            newHorse.setValue(horse.studbook, forKey: "studbook")
-            newHorse.setValue(horse.birthDay, forKey: "birthday")
-            newHorse.setValue(horse.discipline, forKey: "discipline")
-            
-            do {
-                try context.save()
-            } catch {
-                print("Failed saving")
-            }
-        }
-    }
+    
     
     // MARK: - selector objects
     @objc func resyncTapped() {
@@ -1099,7 +1031,7 @@ class HorsesViewController: UIViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "showDetail" {
             if let indexPath = tableView.indexPathForSelectedRow {
-                let horse: Horse
+                let horse: Horses
                 if isFiltering() {
                     horse = filteredHorses[indexPath.row]
                 } else {
@@ -1109,9 +1041,22 @@ class HorsesViewController: UIViewController {
                 controller.detailHorse = horse
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true
-                controller.navigationController?.title = horse.name
+                controller.navigationController?.title = horse.name.first?.value
             }
         }
+    }
+    
+    func getName(_ entity: String, _ tid: Int, _ key: String) -> String {
+        var result: NSManagedObject?
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity)
+        fetchRequest.predicate = NSPredicate(format: "tid == %d", tid)
+        do {
+            let results = try appDelegate.getContext().fetch(fetchRequest) as? [NSManagedObject]
+            result = results?.first
+        } catch {
+            print("Could not fetch")
+        }
+        return result!.value(forKey: key) as! String
     }
 }
 
@@ -1132,7 +1077,7 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "HorseTableCell", for: indexPath) as? HorseTableCell else {
             fatalError("Unexpected Index Path")
         }
-        let horse: Horse
+        let horse: Horses
         if isFiltering() {
             horse = filteredHorses[indexPath.row]
         } else {
@@ -1144,30 +1089,34 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         cell.layer.borderWidth = 0
         
         self.tableView.isHidden = false
-        cell.horseName.text = horse.name
-        let idArray = horse.studbook
+        cell.horseName.text = horse.name.first?.value
+        let idArray: Array<Int32> = (horse.studbook?.map { $0.id })!
+        var acroArray: Array<String> = []
         if idArray.count > 0 {
-            let acroString = convertIDtoName(idArray: idArray, dict: (self.userDefault.object(forKey: "studbooks") as? Dictionary<String, String>)!)
-            cell.studbook.text = acroString
-        } else {
-            cell.studbook.text = ""
-        }
-        cell.horseOwner.text = horse.owner
-        
-        // Optional value birthday
-        let yD = self.userDefault.object(forKey: "jaartallen") as? Dictionary<String, String>
-        if (yD?.count)! > 0 {
-            let yearid = horse.birthDay
-            if yearid != "0" {
-                let jaartal: String = yD![yearid]!
-                cell.birthDay.text = jaartal
-            } else {
-                cell.birthDay.text = ""
+            for id in idArray {
+                let acroString = getName("CoreStudbooks", Int(id), "acro")
+                acroArray.append(acroString)
             }
         } else {
-            checkTaxDicts()
+            acroArray = [""]
+        }
+        cell.studbook.text = acroArray.joined(separator: ", ")
+        cell.horseOwner.text = horse.owner?.first?.owner
+        
+        // Optional value birthday
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreJaartallen")
+        fetchRequest.predicate = NSPredicate(format: "tid == %d", (horse.birthday?.first?.id)!)
+        var jaartal: String = ""
+        do {
+            let result = try self.appDelegate.getContext().fetch(fetchRequest)
+            for r in result as! [Years] {
+                jaartal = (r.year.first?.year)!
+            }
+            cell.birthDay.text = jaartal
+        } catch {
             cell.birthDay.text = ""
         }
+        
         return cell
     }
     
@@ -1183,7 +1132,7 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         if editingStyle == .delete {
             // Quickly remove from tableview
             print("list of horses before deleting: \(self.horses.map { $0.tid })")
-            let tid = self.horses[indexPath.row].tid
+            let tid: Array<Int32> = self.horses[indexPath.row].tid.map { $0.value }
             self.horses.remove(at: indexPath.row)
             tableView.reloadData()
             
@@ -1194,14 +1143,14 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
                 self.resetFavorites(bool: false, list: "favorite")
                 self.patchFavoritesToUser(false, self.horses, "favorite")
                 // Adjust in Core Data
-                fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "favorite")
+                fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "favorite")
             } else if selected[1] {
                 print("list of horses: \(self.horses.map { $0.tid })")
                 // Patch userdata with new list of favorites
                 self.resetFavorites(bool: false, list: "personal")
                 self.patchFavoritesToUser(false, self.horses, "personal")
                 // Adjust in Core Data
-                fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "personal")
+                fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "personal")
             }
             
         }

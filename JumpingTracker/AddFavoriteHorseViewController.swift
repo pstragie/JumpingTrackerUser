@@ -15,11 +15,12 @@ class AddFavoriteHorseViewController: UIViewController {
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     let userDefault = UserDefaults.standard
     var category: String?
-    var horses = [Horse]()
-    var filteredHorses = [Horse]()
-    var selectedHorse: Horse?
-    var favorites = [Horse]()
-    var personal = [Horse]()
+    let horsedata: [Horses] = []
+    var horses = [Horses]()
+    var filteredHorses = [Horses]()
+    var selectedHorse: Horses?
+    var favorites = [Horses]()
+    var personal = [Horses]()
     
     // MARK: - outlets
     @IBOutlet weak var infoLabel: UILabel!
@@ -52,13 +53,13 @@ class AddFavoriteHorseViewController: UIViewController {
     // MARK: - life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        horses = requestFromCoreData("")
+        // Get horses from CoreData first to quickload        
         searchBar.delegate = self
         pickerView.delegate = self
         pickerView.dataSource = self
         tableView.delegate = self
         tableView.dataSource = self
-        filteredHorses = horses.sorted { $0.name < $1.name }
+        filteredHorses = horses.sorted { ($0.name.first?.value)! < ($1.name.first?.value)! }
         selectedHorse = filteredHorses.first
         setupLayout()
         setupNavBar()
@@ -117,10 +118,10 @@ class AddFavoriteHorseViewController: UIViewController {
         return !searchBarIsEmpty()
     }
     // MARK: - Fetch request from Core Data
-    func requestFromCoreData(_ searchText: String) -> [Horse] {
+    func requestFromCoreData(_ searchText: String) -> [Horses] {
         let context = appDelegate.persistentContainer.viewContext
         let request = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
-        var h = [Horse]()
+        var horsedata: [Horses] = []
         if isFiltering() {
             request.predicate = NSPredicate(format: "name CONTAINS[c] %@", searchText)
         }
@@ -128,20 +129,20 @@ class AddFavoriteHorseViewController: UIViewController {
         
         do {
             let result = try context.fetch(request)
-            for data in result as! [NSManagedObject] {
-                h.append(Horse(tid: data.value(forKey: "tid") as! Int, uuid: data.value(forKey: "uuid") as! String, name: data.value(forKey: "name") as! String, owner: data.value(forKey: "owner") as! String, birthDay: data.value(forKey: "birthday") as! String, studbook: (data.value(forKey: "studbook") as? Array<String>)!, discipline: (data.value(forKey: "discipline") as? Array<String>)!))
-                print(data.value(forKey: "name") as! String)
+            for data in result as! [Horses] {
+                
+                horsedata.append(data)
             }
         } catch {
             print("Failed")
         }
-        return h
+        return horsedata
     }
     
     // MARK: filter content for search text
     func filterContentForSearchText(_ searchText: String) {
         horses = requestFromCoreData(searchText)
-        filteredHorses = horses.sorted { $0.name < $1.name }
+        filteredHorses = horses.sorted { ($0.name.first?.value)! < ($1.name.first?.value)! }
         selectedHorse = filteredHorses.first
         pickerView.reloadAllComponents()
     }
@@ -159,6 +160,19 @@ class AddFavoriteHorseViewController: UIViewController {
         let flatArray = newArray.map{ String($0) }
         newString = flatArray.joined(separator: ", ")
         return newString
+    }
+    
+    func getName(_ entity: String, _ tid: Int, _ key: String) -> String {
+        var result: NSManagedObject?
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity)
+        fetchRequest.predicate = NSPredicate(format: "tid == %d", tid)
+        do {
+            let results = try self.appDelegate.getContext().fetch(fetchRequest) as? [NSManagedObject]
+            result = results?.first
+        } catch {
+            print("Could not fetch")
+        }
+        return result!.value(forKey: key) as! String
     }
 }
 
@@ -190,20 +204,12 @@ extension AddFavoriteHorseViewController: UIPickerViewDelegate, UIPickerViewData
     }
     
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-        return filteredHorses[row].name
+        return filteredHorses[row].name.first?.value
     }
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         print("selected horse = \(filteredHorses[row])")
-        let tid = filteredHorses[row].tid
-        let uuid = filteredHorses[row].uuid
-        let name = filteredHorses[row].name
-        let owner = filteredHorses[row].owner
-        let birthday = filteredHorses[row].birthDay
-        let studbook: Array<String> = filteredHorses[row].studbook
-        let discipline: Array<String> = filteredHorses[row].discipline
-        //let deceased: Bool = filteredHorses[row].deceased
-        selectedHorse = Horse(tid: tid, uuid: uuid, name: name, owner: owner, birthDay: birthday, studbook: studbook, discipline: discipline)
+        selectedHorse = filteredHorses[row]
     }
 }
 
@@ -237,7 +243,7 @@ extension AddFavoriteHorseViewController: UITableViewDelegate, UITableViewDataSo
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "HorseTableCell", for: indexPath) as? HorseTableCell else {
             fatalError("Unexpected Index Path")
         }
-        var chosenHorses: [Horse]?
+        var chosenHorses: [Horses]?
         cell.selectionStyle = .gray
         cell.layer.cornerRadius = 0
         cell.layer.masksToBounds = true
@@ -248,13 +254,16 @@ extension AddFavoriteHorseViewController: UITableViewDelegate, UITableViewDataSo
             chosenHorses = personal
         }
         self.tableView.isHidden = false
-        cell.horseName.text = chosenHorses![indexPath.row].name
-        let idArray = chosenHorses![indexPath.row].studbook
-        if (idArray.count) > 0 {
-            let acroString = convertIDtoName(idArray: idArray, dict: (self.userDefault.object(forKey: "studbooks") as? Dictionary<String, String>)!)
-            cell.studbook.text = acroString
+        cell.horseName.text = chosenHorses![indexPath.row].name.first?.value
+        let idArray: Array<Int32> = (chosenHorses![indexPath.row].studbook?.map { $0.id })!
+        var acroArray: Array<String> = []
+        if idArray.count > 0 {
+            for id in idArray {
+                let acroString = getName("CoreStudbooks", Int(id), "acro")
+                acroArray.append(acroString)
+            }
         } else {
-            cell.studbook.text = ""
+            acroArray = [""]
         }
         
         

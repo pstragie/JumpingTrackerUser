@@ -124,6 +124,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     // MARK: - Core Data Saving support
     
+    func getContext() -> NSManagedObjectContext {
+        return persistentContainer.viewContext
+    }
+    
+    
     func saveContext () {
         let context = persistentContainer.viewContext
         if context.hasChanges {
@@ -139,3 +144,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
 }
 
+extension Thread {
+    class func printCurrent() {
+        print("Current thread: \(Thread.current)\r" + "Operation queue: \(OperationQueue.current?.underlyingQueue?.label ?? "None")\r")
+    }
+}

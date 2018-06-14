@@ -1,25 +1,23 @@
 //
-//  StudbookMode.swift
+//  EventTypeMode.swift
 //  JumpingTracker
 //
-//  Created by Pieter Stragier on 31/05/2018.
+//  Created by Pieter Stragier on 13/06/2018.
 //  Copyright © 2018 Pieter Stragier. All rights reserved.
 //
 
 import Foundation
 import CoreData
 
-struct Studbooks: Codable {
+struct EventTypes: Codable {
     var tid: [NumberID]
     var uuid: [UUID]
     var name: [Name]
-    var acro: [Acro]
     
     enum CodingKeys: String, CodingKey {
         case tid
         case uuid
         case name
-        case acro = "field_acronyme"
     }
     
     struct NumberID: Codable {
@@ -29,30 +27,25 @@ struct Studbooks: Codable {
     struct UUID: Codable {
         var value: String
     }
-
+    
     struct Name: Codable {
-        var value: String
-    }
-
-    struct Acro: Codable {
         var value: String
     }
 }
 
-extension Studbook {
-    var allAtributes: Studbooks {
+extension EventType {
+    var allAtributes: EventTypes {
         get {
-            let tid = Studbooks.NumberID(value: self.tid)
-            let uuid = Studbooks.UUID(value: self.uuid!)
-            let name = Studbooks.Name(value: self.name!)
-            let acro = Studbooks.Acro(value: self.acro!)
-            return Studbooks(tid: [tid], uuid: [uuid], name: [name], acro: [acro])
+            let tid = EventTypes.NumberID(value: self.tid)
+            let uuid = EventTypes.UUID(value: self.uuid!)
+            let name = EventTypes.Name(value: self.name!)
+            
+            return EventTypes(tid: [tid], uuid: [uuid], name: [name])
         }
         set {
             self.tid = (newValue.tid.first?.value)!
             self.uuid = (newValue.uuid.first?.value)!
             self.name = (newValue.name.first?.value)!
-            self.acro = (newValue.acro.first?.value)!
         }
     }
 }

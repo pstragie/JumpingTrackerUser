@@ -9,209 +9,237 @@
 import Foundation
 import Alamofire
 import SwiftyJSON
+import UIKit
+import CoreData
 
-class DataRequest: URLSession {
-    /// Class to make data request
-    let userDefault = UserDefaults.standard
+class RequestDataOperation: Operation {
     
-    func getTaxonomy(_ urlString: String, tax: String, completion: @escaping (Dictionary<String, String>) -> ()) {
-        /// function to get taxonomies from CMS
-        print("requesting taxonomy")
-        if ConnectionCheck.isConnectedToNetwork() {
-            let username = "swift_username_request_data"
-            let password = "JTIsabelle29?"
-            let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
-            let base64Credentials = credentialData.base64EncodedString(options: [])
-            let headers: Dictionary<String, String> = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-            
-            var result: Dictionary<String, String> = [:]
-            Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
-                
-                .responseJSON { (response) in
-                if response.result.value == nil {
-                    print("No response")
+    let appDelegate = UIApplication.shared.delegate as! AppDelegate
+    func requestTaxonomies() {
+        print("request taxonomies...")
+        Thread.printCurrent()
+        let username = "swift_username_request_data"
+        let password = "JTIsabelle29?"
+        let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
+        let base64Credentials = credentialData.base64EncodedString(options: [])
+        let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+        self.appDelegate.persistentContainer.performBackgroundTask { (context) in
+            print("Requesting Disciplines JSON")
+            self.requestDisciplines(header: headers, completion: { (result) in
+                print("Casting disciplines...")
+                Thread.printCurrent()
+                for items in result as [Disciplines] {
+                    let disciplines: Discipline = NSEntityDescription.insertNewObject(forEntityName: "CoreDisciplines", into: context) as! Discipline
+                    disciplines.allAtributes = items
                 }
-                switch(response.result) {
-                case .success(let value):
-                    let swiftyJSON = JSON(value)
+                do {
+                    try context.save()
+                } catch {
+                    print("Could not save disciplines")
                     
-                    for item in swiftyJSON {
-                        let (_, dict) = item
-                        let tid: String = String(dict["tid"][0]["value"].intValue)
-                        var value: String = ""
-                        if tax == "studbooks" {
-                            value = dict["field_acronyme"][0]["value"].stringValue
-                        } else {
-                            value = dict["name"][0]["value"].stringValue
-                        }
-                        result[tid] = value
-                    }
-                case .failure(let error):
-                    print("Request to authenticate failed with error: \(error)")
                 }
-                completion(result)
-            }
-            
-        } else {
-            print("No internet connection")
+            })
+            self.requestCoatColors(header: headers, completion: { (result) in
+                for items in result as [CoatColors] {
+                    print("coatcolors items: \(items)")
+                    let coatcolors: CoatColor = NSEntityDescription.insertNewObject(forEntityName: "CoreCoatColors", into: context) as! CoatColor
+                    coatcolors.allAtributes = items
+                }
+                do {
+                    try context.save()
+                } catch {
+                    print("Could not save coat colors")
+                    
+                }
+            })
+            self.requestGenders(header: headers, completion: { (result) in
+                for items in result as [Genders] {
+                    let genders: Gender = NSEntityDescription.insertNewObject(forEntityName: "CoreGenders", into: context) as! Gender
+                    genders.allAtributes = items
+                }
+                do {
+                    try context.save()
+                } catch {
+                    print("Could not save genders")
+                    
+                }
+            })
+            self.requestYears(header: headers, completion: { (result) in
+                for items in result as [Years] {
+                    let years: Year = NSEntityDescription.insertNewObject(forEntityName: "CoreYears", into: context) as! Year
+                    years.allAtributes = items
+                }
+                do {
+                    try context.save()
+                } catch {
+                    print("Could not save years")
+                    
+                }
+            })
+            self.requestStudbooks(header: headers, completion: { (result) in
+                // Store to core data
+                for items in result as [Studbooks] {
+                    let studbook: Studbook = NSEntityDescription.insertNewObject(forEntityName: "CoreStudbooks", into: context) as! Studbook
+                    studbook.allAtributes = items
+                }
+                do {
+                    try context.save()
+                } catch {
+                    print("Could not save studbooks")
+                    
+                }
+            })
         }
         
     }
     
-    func getCoatColors(completion: @escaping ([CoatColor]) -> ()) {
-        if ConnectionCheck.isConnectedToNetwork() {
-            print("Getting coat colors from server...")
-            let username = "swift_username_request_data"
-            let password = "JTIsabelle29?"
-            let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
-            let base64Credentials = credentialData.base64EncodedString(options: [])
-            let headers: Dictionary<String, String> = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-            let urlString = "https://jumpingtracker.com/rest/export/json/coatcolors?_format=json"
-            Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
-                .validate(statusCode: 200..<299)
-                .validate(contentType: ["application/json"])
-                .responseData { (response) in
-                    
-                    switch(response.result) {
-                    case .success:
-                        print("data: \(response.data!)")
-                        if response.result.value != nil {
-                            print("Response: \(response)")
-                            
-                            do {
-                                let coatColor: [CoatColor] = try JSONDecoder().decode([CoatColor].self, from: response.data!)
-                                
-                                completion(coatColor)
-                            } catch {
-                                print("Could not decode")
-                            }
-                        }
-                        break
-                    case .failure(let error):
-                        print("Request to authenticate failed with error: \(error)")
-                        break
-                    }
-                    guard case let .failure(error) = response.result else { return }
-                    
-                    if let error = error as? AFError {
-                        switch error {
-                        case .invalidURL(let url):
-                            print("Invalid URL: \(url) - \(error.localizedDescription)")
-                        case .parameterEncodingFailed(let reason):
-                            print("Parameter encoding failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                        case .multipartEncodingFailed(let reason):
-                            print("Multipart encoding failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                        case .responseValidationFailed(let reason):
-                            print("Response validation failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                            
-                            switch reason {
-                            case .dataFileNil, .dataFileReadFailed:
-                                print("Downlaoded file could not be read")
-                            case .missingContentType(let acceptableContentTypes):
-                                print("Content Type Missing: \(acceptableContentTypes)")
-                            case .unacceptableContentType(let acceptableContentTypes, let responseContentType):
-                                print("Response content type: \(responseContentType) was uncacceptable: \(acceptableContentTypes)")
-                            case .unacceptableStatusCode(let code):
-                                print("Response status code was unacceptable: \(code)")
-                            }
-                        case .responseSerializationFailed(let reason):
-                            print("Response serialization failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                        }
-                        print("Underlying error: \(String(describing: error.underlyingError))")
-                    } else if let error = error as? URLError {
-                        print("URLError occurred: \(error)")
-                    } else {
-                        print("Unknown error: \(error)")
-                    }
-                    
-            }
-            
-        } else {
-            print("No internet connection")
-        }
-        
-    }
-    
-    func getStudbooks(completion: @escaping ([Studbook]) -> ()) {
+    // MARK: - request functions
+    func requestStudbooks(header: Dictionary<String, String>, completion: @escaping([Studbooks]) -> ()) {
         if ConnectionCheck.isConnectedToNetwork() {
             print("Getting Studbooks from server...")
-            let username = "swift_username_request_data"
-            let password = "JTIsabelle29?"
-            let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
-            let base64Credentials = credentialData.base64EncodedString(options: [])
-            let headers: Dictionary<String, String> = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
             let urlString = "https://jumpingtracker.com/rest/export/json/studbooks?_format=json"
-            Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
+            Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
                 .validate(statusCode: 200..<299)
                 .validate(contentType: ["application/json"])
-                .responseData { (response) in
+                .responseData(completionHandler: { (response) in
                     
                     switch(response.result) {
                     case .success:
-                        print("data: \(response.data!)")
                         if response.result.value != nil {
-                            print("Response: \(response)")
-                            
                             do {
-                                let studbook: [Studbook] = try JSONDecoder().decode([Studbook].self, from: response.data!)
+                                let studbook: [Studbooks] = try JSONDecoder().decode([Studbooks].self, from: response.data!)
                                 
                                 completion(studbook)
+                                print("studbook decoded")
                             } catch {
-                                print("Could not decode")
+                                print("Could not decode studbook")
                             }
                         }
                         break
                     case .failure(let error):
                         print("Request to authenticate failed with error: \(error)")
+                        print("error code: \(error)")
                         break
                     }
-                    guard case let .failure(error) = response.result else { return }
                     
-                    if let error = error as? AFError {
-                        switch error {
-                        case .invalidURL(let url):
-                            print("Invalid URL: \(url) - \(error.localizedDescription)")
-                        case .parameterEncodingFailed(let reason):
-                            print("Parameter encoding failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                        case .multipartEncodingFailed(let reason):
-                            print("Multipart encoding failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                        case .responseValidationFailed(let reason):
-                            print("Response validation failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                            
-                            switch reason {
-                            case .dataFileNil, .dataFileReadFailed:
-                                print("Downlaoded file could not be read")
-                            case .missingContentType(let acceptableContentTypes):
-                                print("Content Type Missing: \(acceptableContentTypes)")
-                            case .unacceptableContentType(let acceptableContentTypes, let responseContentType):
-                                print("Response content type: \(responseContentType) was uncacceptable: \(acceptableContentTypes)")
-                            case .unacceptableStatusCode(let code):
-                                print("Response status code was unacceptable: \(code)")
-                            }
-                        case .responseSerializationFailed(let reason):
-                            print("Response serialization failed: \(error.localizedDescription)")
-                            print("Failure Reason: \(reason)")
-                        }
-                        print("Underlying error: \(String(describing: error.underlyingError))")
-                    } else if let error = error as? URLError {
-                        print("URLError occurred: \(error)")
-                    } else {
-                        print("Unknown error: \(error)")
-                    }
-                    
-            }
-            
+                })
         } else {
-            print("No internet connection")
+            print("Not connected")
         }
-        
+    }
+    
+    
+    func requestYears(header: Dictionary<String, String>, completion: @escaping ([Years]) -> ()) {
+        let urlString = "https://jumpingtracker.com/rest/export/json/jaartallen?_format=json"
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
+            .validate(statusCode: 200..<300)
+            .validate(contentType: ["application/json"])
+            .responseData(completionHandler: { (response) in
+                
+                switch(response.result) {
+                case .success:
+                    if response.result.value != nil {
+                        print("Response: \(response)")
+                        
+                        do {
+                            let years: [Years] = try JSONDecoder().decode([Years].self, from: response.data!)
+                            
+                            completion(years)
+                            print("years decoded")
+                        } catch {
+                            print("Could not decode years")
+                        }
+                    }
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    break
+                }
+            })
+    }
+    
+    func requestGenders(header: Dictionary<String, String>, completion: @escaping ([Genders]) -> ()) {
+        let urlString = "https://jumpingtracker.com/rest/export/json/gender?_format=json"
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
+            .validate(statusCode: 200..<300)
+            .validate(contentType: ["application/json"])
+            .responseData(completionHandler: { (response) in
+                
+                switch(response.result) {
+                case .success:
+                    if response.result.value != nil {
+                        print("Response: \(response)")
+                        do {
+                            let genders: [Genders] = try JSONDecoder().decode([Genders].self, from: response.data!)
+                            
+                            completion(genders)
+                            print("genders decoded")
+                        } catch {
+                            print("Could not decode genders")
+                        }
+                    }
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    break
+                }
+            })
+    }
+    
+    func requestCoatColors(header: Dictionary<String, String>, completion: @escaping ([CoatColors]) -> ()) {
+        let urlString = "https://jumpingtracker.com/rest/export/json/coatcolors?_format=json"
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
+            .validate(statusCode: 200..<300)
+            .validate(contentType: ["application/json"])
+            .responseData(completionHandler: { (response) in
+                
+                switch(response.result) {
+                case .success:
+                    if response.result.value != nil {
+                        print("Response: \(response)")
+                        do {
+                            let coatcolors: [CoatColors] = try JSONDecoder().decode([CoatColors].self, from: response.data!)
+                            
+                            completion(coatcolors)
+                            print("coatcolors decoded")
+                        } catch {
+                            print("Could not decode coatcolors")
+                        }
+                    }
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    break
+                }
+            })
+    }
+    
+    func requestDisciplines(header: Dictionary<String, String>, completion: @escaping ([Disciplines]) -> ()) {
+        let urlString = "https://jumpingtracker.com/rest/export/json/disciplines?_format=json"
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
+            .validate(statusCode: 200..<300)
+            .validate(contentType: ["application/json"])
+            .responseData(completionHandler: { (response) in
+                
+                switch(response.result) {
+                case .success:
+                    if response.result.value != nil {
+                        print("Response: \(response)")
+                        do {
+                            let disciplines: [Disciplines] = try JSONDecoder().decode([Disciplines].self, from: response.data!)
+                            
+                            completion(disciplines)
+                            print("disciplines decoded")
+                        } catch {
+                            print("Could not decode disciplines")
+                        }
+                    }
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    break
+                }
+            })
     }
 }
 

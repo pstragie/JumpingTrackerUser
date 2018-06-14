@@ -1,37 +1,70 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="14133" systemVersion="17E199" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="CoreCoatColors" representedClassName="CoreCoatColors" syncable="YES" codeGenerationType="class">
+    <entity name="CoreCoatColors" representedClassName="CoatColor" syncable="YES" codeGenerationType="class">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="tid" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
-    </entity>
-    <entity name="CoreEvents" representedClassName="CoreEvents" syncable="YES" codeGenerationType="class">
-        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
-        <attribute name="location" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="name" attributeType="String" syncable="YES"/>
-    </entity>
-    <entity name="CoreHorses" representedClassName="CoreHorses" syncable="YES" codeGenerationType="class">
-        <attribute name="birthday" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="discipline" optional="YES" attributeType="Transformable" syncable="YES"/>
-        <attribute name="favorite" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="name" attributeType="String" syncable="YES"/>
-        <attribute name="owner" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="personal" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="studbook" optional="YES" attributeType="Transformable" syncable="YES"/>
         <attribute name="tid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
-    <entity name="CoreStudbooks" representedClassName="CoreStudbooks" syncable="YES" codeGenerationType="class">
-        <attribute name="acronym" optional="YES" attributeType="String" syncable="YES"/>
+    <entity name="CoreDisciplines" representedClassName="Discipline" syncable="YES" codeGenerationType="class">
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CoreEvents" representedClassName="Event" syncable="YES" codeGenerationType="class">
+        <attribute name="countrycode" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="date" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="locality" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="location" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="title" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CoreEventTypes" representedClassName="EventType" syncable="YES" codeGenerationType="class">
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CoreGender" representedClassName="Gender" syncable="YES" codeGenerationType="class">
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CoreHorses" representedClassName="Horse" syncable="YES" codeGenerationType="class">
+        <attribute name="birthday" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="coatcolors" optional="YES" attributeType="Transformable" syncable="YES"/>
+        <attribute name="deceased" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="disciplines" optional="YES" attributeType="Transformable" syncable="YES"/>
+        <attribute name="father" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="favorite" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="gender" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="height" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="mother" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="name" attributeType="String" syncable="YES"/>
+        <attribute name="owner" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="personal" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="studbooks" optional="YES" attributeType="Transformable" syncable="YES"/>
+        <attribute name="studreg" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tid" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CoreJaartallen" representedClassName="Year" syncable="YES" codeGenerationType="class">
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CoreStudbooks" representedClassName="Studbook" syncable="YES" codeGenerationType="class">
+        <attribute name="acro" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="active" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="tid" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <elements>
-        <element name="CoreEvents" positionX="-54" positionY="27" width="128" height="90"/>
-        <element name="CoreHorses" positionX="-63" positionY="-18" width="128" height="180"/>
-        <element name="CoreStudbooks" positionX="-54" positionY="54" width="128" height="120"/>
         <element name="CoreCoatColors" positionX="-45" positionY="63" width="128" height="90"/>
+        <element name="CoreEvents" positionX="-54" positionY="27" width="128" height="120"/>
+        <element name="CoreHorses" positionX="-63" positionY="-18" width="128" height="285"/>
+        <element name="CoreStudbooks" positionX="-54" positionY="54" width="128" height="120"/>
+        <element name="CoreDisciplines" positionX="-54" positionY="54" width="128" height="90"/>
+        <element name="CoreJaartallen" positionX="-45" positionY="99" width="128" height="90"/>
+        <element name="CoreGender" positionX="-36" positionY="108" width="128" height="90"/>
+        <element name="CoreEventTypes" positionX="-18" positionY="126" width="128" height="90"/>
     </elements>
 </model>

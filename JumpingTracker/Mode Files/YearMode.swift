@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import UIKit
+import CoreData
 
 struct Years: Decodable {
     var tid: [NumberID]
@@ -21,7 +21,7 @@ struct Years: Decodable {
     }
     
     struct NumberID: Codable {
-        var value: Int
+        var value: Int32
     }
     
     struct UUID: Codable {
@@ -37,3 +37,20 @@ struct Years: Decodable {
     }
 }
 
+
+extension Year {
+    var allAtributes: Years {
+        get {
+            let tid = Years.NumberID(value: self.tid)
+            let uuid = Years.UUID(value: self.uuid!)
+            let year = Years.Year(year: self.name!)
+            
+            return Years(tid: [tid], uuid: [uuid], year: [year])
+        }
+        set {
+            self.tid = (newValue.tid.first?.value)!
+            self.uuid = (newValue.uuid.first?.value)!
+            self.name = (newValue.year.first?.year)!
+        }
+    }
+}

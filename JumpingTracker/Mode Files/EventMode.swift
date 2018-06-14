@@ -7,9 +7,9 @@
 //
 
 import Foundation
-import UIKit
+import CoreData
 
-struct Events: Decodable {
+struct Events: Codable {
     var title: [Title]
     var address: [Address]
     var date: [Date]
@@ -36,5 +36,23 @@ struct Events: Decodable {
     
     struct Date: Codable {
         var value: String
+    }
+}
+
+extension Event {
+    
+    var allAtributes: Events {
+        get {
+            let title = Events.Title(value: self.title!)
+            let address = Events.Address(countryCode: self.countrycode!, locality: self.locality!)
+            let date = Events.Date(value: self.date!)
+            return Events(title: [title], address: [address], date: [date])
+        }
+        set {
+            self.title = (newValue.title.first?.value)!
+            self.countrycode = (newValue.address.first?.countryCode)!
+            self.locality = (newValue.address.first?.locality)!
+            self.date = (newValue.date.first?.value)!
+        }
     }
 }
