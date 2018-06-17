@@ -112,6 +112,7 @@
 		B60E66DC20C479C6008901C1 /* Mode Files */ = {
 			isa = PBXGroup;
 			children = (
+				B698860C20CB6CA6002AFFC1 /* dataModel.xcdatamodeld */,
 				B6AD327020D160E800C29912 /* CoreProperties */,
 				B68EE2F320BD6E7F008C2FC5 /* EventMode.swift */,
 				B60E66D820C36F27008901C1 /* UserMode.swift */,
@@ -169,7 +170,6 @@
 				B68EE2E220BD5B22008C2FC5 /* LaunchScreen.storyboard */,
 				B68EE2E520BD5B23008C2FC5 /* Info.plist */,
 				B68EE30720C20C6A008C2FC5 /* Snippets */,
-				B698860C20CB6CA6002AFFC1 /* dataModel.xcdatamodeld */,
 			);
 			path = JumpingTracker;
 			sourceTree = "<group>";

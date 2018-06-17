@@ -27,11 +27,23 @@ struct Horses: Codable {
     var coatcolor: [Coatcolor]?
     var studreg: [Studreg]?
     var height: [Height]?
+    var idnumber: [IDNumber]
     
-    init(tid: [Horses.ID], uuid: [Horses.UUID], name: [Horses.Name], studbook: [Horses.Studbook]? = nil, owner: [Horses.Owner]? = nil, birthday: [Horses.Birthday]? = nil, discipline: [Horses.Discipline]? = nil, gender: [Horses.Gender]? = nil, father: [Horses.Father]? = nil, mother: [Horses.Mother]? = nil, deceased: [Horses.Deceased], coatcolor: [Horses.Coatcolor]? = nil, studreg: [Horses.Studreg]? = nil, height: [Horses.Height]? = nil) {
+    var studbookOptional: [Horses.Studbook] {
+        get {
+            return (self.studbook ?? [])
+        }
+    }
+    var studregOptional: [Horses.Studreg] {
+        get {
+            return (self.studreg ?? [])
+        }
+    }
+    init(tid: [Horses.ID], uuid: [Horses.UUID], name: [Horses.Name], studbook: [Horses.Studbook]? = nil, owner: [Horses.Owner]? = nil, birthday: [Horses.Birthday]? = nil, discipline: [Horses.Discipline]? = nil, gender: [Horses.Gender]? = nil, father: [Horses.Father]? = nil, mother: [Horses.Mother]? = nil, deceased: [Horses.Deceased], coatcolor: [Horses.Coatcolor]? = nil, studreg: [Horses.Studreg]? = nil, height: [Horses.Height]? = nil, idnumber: [Horses.IDNumber]) {
         self.tid = tid
         self.uuid = uuid
         self.name = name
+        self.idnumber = idnumber
         self.studbook = studbook ?? []
         self.owner = owner ?? []
         self.birthday = birthday ?? []
@@ -47,6 +59,7 @@ struct Horses: Codable {
     
     enum CodingKeys: String, CodingKey {
         case tid, uuid, name
+        case idnumber = "field_identification_ndeg"
         case studbook = "field_studbook"
         case owner = "field_current_owner"
         case birthday = "field_birth_year"
@@ -91,6 +104,10 @@ struct Horses: Codable {
         enum CodingKeys: String, CodingKey {
             case owner = "value"
         }
+    }
+    
+    struct IDNumber: Codable, Equatable {
+        var value: String
     }
     
     struct Birthday: Codable, Equatable {
@@ -209,6 +226,7 @@ extension Horse {
             let tid = Horses.ID(value: self.tid)
             let uuid = Horses.UUID(value: self.uuid!)
             let name = Horses.Name(value: self.name!)
+            let idnumber = Horses.IDNumber(value: self.identification!)
             let owner = Horses.Owner(owner: self.owner ?? "")
             
             let father = Horses.Father(id: self.father , type: "taxonomy_term", uuid: "\(convertTid("CoreHorses", Int(self.father), "uuid"))", url: "/taxonomy/term/\(self.father)")
@@ -219,26 +237,39 @@ extension Horse {
             let deceased = Horses.Deceased(value: self.deceased)
             let studreg = Horses.Studreg(value: self.studreg ?? "")
             var studArray: Array<Horses.Studbook> = []
-            for studbookid in self.studbooks as! Array<Int> {
-                let resultUuid: String = convertTid("CoreStudbooks", Int(studbookid), "uuid")
-                studArray.append(Horses.Studbook(id: Int32(studbookid), type: "taxonomy_term", uuid: resultUuid, url: "taxonomy/term/\(studbookid)"))
+            if self.studbooks != nil {
+                for studbookid in (self.studbooks as! Array<Int>) {
+                    let resultUuid: String = convertTid("CoreStudbooks", Int(studbookid), "uuid")
+                    studArray.append(Horses.Studbook(id: Int32(studbookid), type: "taxonomy_term", uuid: resultUuid, url: "taxonomy/term/\(studbookid)"))
+                }
+            } else {
+                studArray = []
             }
             var discArray: Array<Horses.Discipline> = []
-            for discid in self.disciplines as! Array<Int>{
-                let resultUuid: String = convertTid("CoreDisciplines", discid, "uuid")
-                discArray.append(Horses.Discipline(id: Int32(discid), type: "taxonomy_term", uuid: resultUuid, url: "taxonomy/term/\(discid)"))
+            if self.disciplines != nil {
+                for discid in self.disciplines as! Array<Int>{
+                    let resultUuid: String = convertTid("CoreDisciplines", discid, "uuid")
+                    discArray.append(Horses.Discipline(id: Int32(discid), type: "taxonomy_term", uuid: resultUuid, url: "taxonomy/term/\(discid)"))
+                }
+            } else {
+                discArray = []
             }
             var coatArray: Array<Horses.Coatcolor> = []
-            for coatid in self.coatcolors as! Array<Int> {
-                let resultUuid: String = convertTid("CoreCoatColors", coatid, "uuid")
-                coatArray.append(Horses.Coatcolor(id: Int32(coatid), type: "taxonomy_term", uuid: resultUuid, url: "taxonomy/term/\(coatid)"))
+            if self.coatcolors != nil {
+                for coatid in self.coatcolors as! Array<Int> {
+                    let resultUuid: String = convertTid("CoreCoatColors", coatid, "uuid")
+                    coatArray.append(Horses.Coatcolor(id: Int32(coatid), type: "taxonomy_term", uuid: resultUuid, url: "taxonomy/term/\(coatid)"))
+                }
+            } else {
+                coatArray = []
             }
-            return Horses(tid: [tid], uuid: [uuid], name: [name], studbook: studArray, owner: [owner], birthday: [birthDay], discipline: discArray, gender: [gender], father: [father], mother: [mother], deceased: [deceased], coatcolor: coatArray, studreg: [studreg], height: [height])
+            return Horses(tid: [tid], uuid: [uuid], name: [name], studbook: studArray, owner: [owner], birthday: [birthDay], discipline: discArray, gender: [gender], father: [father], mother: [mother], deceased: [deceased], coatcolor: coatArray, studreg: [studreg], height: [height], idnumber: [idnumber])
         }
         set {
             self.tid = Int32((newValue.tid.first?.value)!)
             self.uuid = (newValue.uuid.first?.value)!
             self.name = (newValue.name.first?.value)!
+            self.identification = (newValue.name.first?.value)!
             if newValue.father?.first?.id != nil {
                 self.father = Int32((newValue.father?.first?.id)!)
             }
@@ -274,16 +305,18 @@ extension Horse {
     }
     
     func convertTid(_ entity: String, _ tid: Int, _ key: String) -> String {
-        var result: NSManagedObject?
+        //var result: NSManagedObject?
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity)
         fetchRequest.predicate = NSPredicate(format: "tid == %d", tid)
         do {
             let results = try context?.fetch(fetchRequest) as? [NSManagedObject]
-            result = results?.first
+            for result in results! {
+                return result.value(forKey: key) as! String
+            }
         } catch {
             print("Could not fetch")
         }
-        return result!.value(forKey: key) as! String
+        return "Unknown"
     }
     
     

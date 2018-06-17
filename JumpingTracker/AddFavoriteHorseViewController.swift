@@ -19,8 +19,8 @@ class AddFavoriteHorseViewController: UIViewController {
     var horses = [Horses]()
     var filteredHorses = [Horses]()
     var selectedHorse: Horses?
-    var favorites = [Horses]()
-    var personal = [Horses]()
+    var favorites: [Horses] = []
+    var personal: [Horses] = []
     
     // MARK: - outlets
     @IBOutlet weak var infoLabel: UILabel!
@@ -107,6 +107,7 @@ class AddFavoriteHorseViewController: UIViewController {
         }
         //navigationController?.title = category!
     }
+    
     // MARK: search bar empty?
     func searchBarIsEmpty() -> Bool {
         // Returns true if the text is empty or nil

@@ -64,6 +64,7 @@ class HomeViewController: UIViewController {
     }
     @IBAction func loginButtonTapped(_ sender: UIButton) {
         activityIndicator.startAnimating()
+        view.endEditing(true)
         userDefault.set(usernameField.text, forKey: "Username")
         do {
             // This is a new account, create a new keychain item with the account name.
@@ -161,10 +162,11 @@ class HomeViewController: UIViewController {
             let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
             let base64Credentials = credentialData.base64EncodedString(options: [])
             let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-            self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                print("Requesting Disciplines JSON")
-                self.requestDisciplines(header: headers, completion: { (result) in
-                    print("Casting disciplines...")
+            
+            print("Requesting Disciplines JSON")
+            self.requestDisciplines(header: headers, completion: { (result) in
+                print("Casting disciplines...")
+                self.appDelegate.persistentContainer.performBackgroundTask { (context) in
                     Thread.printCurrent()
                     for items in result as [Disciplines] {
                         let disciplines: Discipline = NSEntityDescription.insertNewObject(forEntityName: "CoreDisciplines", into: context) as! Discipline
@@ -176,35 +178,47 @@ class HomeViewController: UIViewController {
                         print("Could not save disciplines")
                         
                     }
-                })
-                self.requestCoatColors(header: headers, completion: { (result) in
-                    for items in result as [CoatColors] {
-                        print("coatcolors items: \(items)")
-                        let coatcolors: CoatColor = NSEntityDescription.insertNewObject(forEntityName: "CoreCoatColors", into: context) as! CoatColor
-                        coatcolors.allAtributes = items
+                }
+            })
+            
+            
+            self.requestCoatColors(header: headers, completion: { (result) in
+                self.appDelegate.persistentContainer.performBackgroundTask { (context) in
+                Thread.printCurrent()
+                for items in result as [CoatColors] {
+                    let coatcolors: CoatColor = NSEntityDescription.insertNewObject(forEntityName: "CoreCoatColors", into: context) as! CoatColor
+                    coatcolors.allAtributes = items
+                }
+                do {
+                    try context.save()
+                } catch {
+                    print("Could not save coat colors")
+                    
                     }
-                    do {
-                        try context.save()
-                    } catch {
-                        print("Could not save coat colors")
-                        
-                    }
-                })
-                self.requestGenders(header: headers, completion: { (result) in
+                    
+                }
+            })
+            
+            self.requestGenders(header: headers, completion: { (result) in
+                self.appDelegate.persistentContainer.performBackgroundTask { (context) in
+                    Thread.printCurrent()
                     for items in result as [Genders] {
-                        let genders: Gender = NSEntityDescription.insertNewObject(forEntityName: "CoreGenders", into: context) as! Gender
+                        let genders: Gender = NSEntityDescription.insertNewObject(forEntityName: "CoreGender", into: context) as! Gender
                         genders.allAtributes = items
                     }
                     do {
                         try context.save()
                     } catch {
                         print("Could not save genders")
-                        
                     }
-                })
-                self.requestYears(header: headers, completion: { (result) in
+                }
+            })
+            
+            self.requestYears(header: headers, completion: { (result) in
+                self.appDelegate.persistentContainer.performBackgroundTask { (context) in
+                    Thread.printCurrent()
                     for items in result as [Years] {
-                        let years: Year = NSEntityDescription.insertNewObject(forEntityName: "CoreYears", into: context) as! Year
+                        let years: Year = NSEntityDescription.insertNewObject(forEntityName: "CoreJaartallen", into: context) as! Year
                         years.allAtributes = items
                     }
                     do {
@@ -213,9 +227,13 @@ class HomeViewController: UIViewController {
                         print("Could not save years")
                         
                     }
-                })
-                self.requestStudbooks(header: headers, completion: { (result) in
-                    // Store to core data
+                }
+            })
+            
+            self.requestStudbooks(header: headers, completion: { (result) in
+                // Store to core data
+                self.appDelegate.persistentContainer.performBackgroundTask { (context) in
+                    Thread.printCurrent()
                     for items in result as [Studbooks] {
                         let studbook: Studbook = NSEntityDescription.insertNewObject(forEntityName: "CoreStudbooks", into: context) as! Studbook
                         studbook.allAtributes = items
@@ -226,8 +244,9 @@ class HomeViewController: UIViewController {
                         print("Could not save studbooks")
                         
                     }
-                })
-            }
+                }
+            })
+            
         }
         opQueue.addOperation(taxRequestOperation)
     }
@@ -664,7 +683,7 @@ class HomeViewController: UIViewController {
     // MARK: - setup layout
     func setupLayout() {
         // Create JumpingTracker View
-        jtView = UIView(frame: CGRect(x: 20, y: 70, width: 300, height: 50))
+        jtView = UIView(frame: CGRect(x: 20, y: 60, width: 300, height: 50))
         jtView.center.x = self.view.center.x
         jtView.layer.cornerRadius = 22
         jtView.sizeToFit()

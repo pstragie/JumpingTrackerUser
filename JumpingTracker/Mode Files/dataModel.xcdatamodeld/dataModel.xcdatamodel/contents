@@ -36,6 +36,7 @@
         <attribute name="favorite" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="gender" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="height" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="identification" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="mother" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="name" attributeType="String" syncable="YES"/>
         <attribute name="owner" optional="YES" attributeType="String" syncable="YES"/>
@@ -58,13 +59,13 @@
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <elements>
-        <element name="CoreCoatColors" positionX="-45" positionY="63" width="128" height="90"/>
-        <element name="CoreEvents" positionX="-54" positionY="27" width="128" height="120"/>
-        <element name="CoreHorses" positionX="-63" positionY="-18" width="128" height="285"/>
-        <element name="CoreStudbooks" positionX="-54" positionY="54" width="128" height="120"/>
-        <element name="CoreDisciplines" positionX="-54" positionY="54" width="128" height="90"/>
-        <element name="CoreJaartallen" positionX="-45" positionY="99" width="128" height="90"/>
-        <element name="CoreGender" positionX="-36" positionY="108" width="128" height="90"/>
-        <element name="CoreEventTypes" positionX="-18" positionY="126" width="128" height="90"/>
+        <element name="CoreCoatColors" positionX="-254" positionY="0" width="128" height="90"/>
+        <element name="CoreDisciplines" positionX="-74" positionY="288" width="128" height="90"/>
+        <element name="CoreEvents" positionX="-245" positionY="234" width="128" height="120"/>
+        <element name="CoreEventTypes" positionX="142" positionY="198" width="128" height="90"/>
+        <element name="CoreGender" positionX="142" positionY="99" width="128" height="90"/>
+        <element name="CoreHorses" positionX="-54" positionY="-9" width="128" height="300"/>
+        <element name="CoreJaartallen" positionX="142" positionY="-0" width="128" height="90"/>
+        <element name="CoreStudbooks" positionX="-252" positionY="105" width="128" height="120"/>
     </elements>
 </model>
