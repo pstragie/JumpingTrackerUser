@@ -181,7 +181,23 @@ class HomeViewController: UIViewController {
                 }
             })
             
-            
+            print("Requesting Event types JSON")
+            self.requestEventTypes(header: headers, completion: { (result) in
+                print("Casting event types...")
+                self.appDelegate.persistentContainer.performBackgroundTask { (context) in
+                    Thread.printCurrent()
+                    for items in result as [EventTypes] {
+                        let eventtypes: EventType = NSEntityDescription.insertNewObject(forEntityName: "CoreEventTypes", into: context) as! EventType
+                        eventtypes.allAtributes = items
+                    }
+                    do {
+                        try context.save()
+                    } catch {
+                        print("Could not save disciplines")
+                        
+                    }
+                }
+            })
             self.requestCoatColors(header: headers, completion: { (result) in
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
                 Thread.printCurrent()
@@ -399,6 +415,34 @@ class HomeViewController: UIViewController {
                 }
             })
     }
+    
+    func requestEventTypes(header: Dictionary<String, String>, completion: @escaping ([EventTypes]) -> ()) {
+        let urlString = "https://jumpingtracker.com/rest/export/json/event_types?_format=json"
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
+            .validate(statusCode: 200..<300)
+            .validate(contentType: ["application/json"])
+            .responseData(completionHandler: { (response) in
+                
+                switch(response.result) {
+                case .success:
+                    if response.result.value != nil {
+                        print("Response: \(response)")
+                        do {
+                            let eventtypes: [EventTypes] = try JSONDecoder().decode([EventTypes].self, from: response.data!)
+                            
+                            completion(eventtypes)
+                            print("disciplines decoded")
+                        } catch {
+                            print("Could not decode disciplines")
+                        }
+                    }
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    break
+                }
+            })
+    }
     // MARK: - verify account
     func verifyAccount() {
         print("verifying")
@@ -432,35 +476,61 @@ class HomeViewController: UIViewController {
                 print("Token: \(token!)")
                 print("uid: \(uid!)")
                 
-                self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, success: { (firstname) in
-                    print("firstname: \(firstname!)")
-                    self.userDefault.set(firstname, forKey: "firstname")
+                self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, completion: { (result) in
                     self.userDefault.set(true, forKey: "loginSuccessful")
                     self.loginSuccess = true
                     self.activityIndicator.stopAnimating()
                     self.showLogin()
                     
-                    
+                    //let fetchRequest =
+                    self.appDelegate.persistentContainer.performBackgroundTask({ (context) in
+                        //let firstname: CurrentUser =
+                        for items in result as [User] {
+                            let userdata: CurrentUser = NSEntityDescription.insertNewObject(forEntityName: "CoreCurrentUser", into: context) as! CurrentUser
+                            userdata.allAtributes = items
+                            self.userDefault.set(userdata.firstname!, forKey: "firstname")
+                        }
+                        do {
+                            try context.save()
+                        } catch {
+                            print("Could not save coat colors")
+                            
+                        }
+                        
+                    })
+                
                 }, failure: { (error) in
                     print("UID failure.")
                     self.userDefault.set(false, forKey: "loginSuccessful")
                     self.loginSuccess = false
                     // Try again automatically
                     print("Retrying firstname retrieval.")
-                    self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, success: { (firstname) in
-                        print("firstname: \(firstname!)")
-                        self.userDefault.set(firstname, forKey: "firstname")
+                    self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, completion: { (result) in
                         self.userDefault.set(true, forKey: "loginSuccessful")
                         self.loginSuccess = true
                         self.activityIndicator.stopAnimating()
                         self.showLogin()
+                        
+                        self.appDelegate.persistentContainer.performBackgroundTask({ (context) in
+                            for items in result as [User] {
+                                let userdata: CurrentUser = NSEntityDescription.insertNewObject(forEntityName: "CoreCurrentUser", into: context) as! CurrentUser
+                                userdata.allAtributes = items
+                                self.userDefault.set(userdata.firstname, forKey: "firstname")
+                            }
+                            do {
+                                try context.save()
+                            } catch {
+                                print("Could not save coat colors")
+                                
+                            }
+                            
+                        })
                     }, failure: { (error) in
-                        print("UID failure.")
+                        print("Repeat failure")
                         self.userDefault.set(false, forKey: "loginSuccessful")
                         self.loginSuccess = false
                         self.activityIndicator.stopAnimating()
-                        self.showLoginFailedAlert("Login successful, but could not retreive user data.\nTry again later.")
-                        
+                        self.loginView.shake()
                     })
                 })
             }, failure: { (error) in
@@ -559,28 +629,31 @@ class HomeViewController: UIViewController {
         }
     }
     
-    func requestJSON(_ urlString: String, headers: Dictionary<String, String>, success: @escaping (_ firstname: String?) -> Void, failure: @escaping (_ error: Error?) -> Void)  {
+    func requestJSON(_ urlString: String, headers: Dictionary<String, String>, completion: @escaping (_ result: [User]) -> Void, failure: @escaping (_ error: Error?) -> Void)  {
         print("Requesting JSON...")
         
         Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
             .validate(statusCode: 200..<299)
             .validate(contentType: ["application/json"])
-            .responseJSON { (response) in
-                if response.result.value == nil {
-                    print("No response")
-                }
+            
+            .responseData(completionHandler: { (response) in
+                
                 switch(response.result) {
-                case .success(let value):
-                    let swiftyJSON = JSON(value)
-                    let firstname = swiftyJSON["field_firstname"][0]["value"].stringValue
-                    let surname = swiftyJSON["field_surname"][0]["value"].stringValue
-                    
-                    self.userDefault.set(firstname, forKey: "firstname")
-                    self.userDefault.set(surname, forKey: "surname")
-                    success(firstname)
+                case .success:
+                    print("data: \(response.data!)")
+                    if response.result.value != nil {
+                        
+                        do {
+                            let userData: User = try JSONDecoder().decode(User.self, from: response.data!)
+                            print("userdata decoded")
+                            completion([userData])
+                        } catch let error {
+                            print("Could not decode userdata: \(error)")
+                        }
+                    }
                     break
                 case .failure(let error):
-                    print("User request to authenticate failed with error: \(error)")
+                    print("Request to authenticate failed with error: \(error)")
                     failure(error)
                     break
                 }
@@ -623,7 +696,7 @@ class HomeViewController: UIViewController {
             }
             
             
-        }
+        })
     }
     
     // MARK: - Decode JWT
@@ -737,6 +810,19 @@ class HomeViewController: UIViewController {
         
         activityIndicator.stopAnimating()
     }
+    func fetchFirstname() {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreCurrentUser")
+        //fetchRequest.predicate = NSPredicate(format: "uid == %@", self.userDefault.value(forKey: "UID") as! CVarArg)
+        do {
+            let results = try self.appDelegate.getContext().fetch(fetchRequest) as! [CurrentUser]
+            for item in results {
+                let firstname: String = item.firstname!
+                self.userDefault.set(firstname, forKey: "firstname")
+            }
+        } catch {
+            print("Could not catch firstname")
+        }
+    }
     
     func showLogin() {
         print("show Login?")
@@ -744,6 +830,7 @@ class HomeViewController: UIViewController {
         print("loginSuccess: \(loginSuccess)")
         if userDefault.bool(forKey: "loginSuccessful") {
             loginView.isHidden = true
+            fetchFirstname()
             print("user previously logged in!")
             if userDefault.string(forKey: "firstname") != nil && userDefault.string(forKey: "firstname") != "" {
                 let username = userDefault.string(forKey: "firstname")!

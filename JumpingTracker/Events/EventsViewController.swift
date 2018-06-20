@@ -1,10 +1,11 @@
 //
-//  HorsesViewController.swift
+//  EventsViewController.swift
 //  JumpingTracker
 //
-//  Created by Pieter Stragier on 31/05/2018.
+//  Created by Pieter Stragier on 29/05/2018.
 //  Copyright © 2018 Pieter Stragier. All rights reserved.
 //
+
 
 import UIKit
 import Foundation
@@ -12,20 +13,19 @@ import Alamofire
 import SwiftyJSON
 import CoreData
 
-class HorsesViewController: UIViewController {
+class EventsViewController: UIViewController {
     
     // MARK: - Variables
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     let opQueue: OperationQueue = OperationQueue()
-    var horseDetailViewController: HorseDetailViewController? = nil
+    var eventDetailViewController: EventDetailViewController? = nil
     let userDefault = UserDefaults.standard
     let searchController = UISearchController(searchResultsController: nil)
-    var filteredHorses = [Horses]()
-    var horses: [Horses] = []
-    var allHorses = [Horses]()
+    var splitFilteredEvents: Dictionary<String, [Events]> = ["passed":[], "upcoming":[]]
+    var filteredEvents: [Events] = []
+    var splitEvents: Dictionary<String, [Events]> = ["passed":[], "upcoming":[]]
+    var events: [Events] = []
     var selected: Array<Bool> = [false, false, false]
-    var studbookDict: Dictionary<String, String> = [:]
-    var yearDict: Dictionary<String, String> = [:]
     var disciplineDict: Dictionary<String, String> = [:]
     var originalCenter: CGPoint!
     var categoryAdd: String = ""
@@ -36,45 +36,55 @@ class HorsesViewController: UIViewController {
         return view
     }()
     
-    var allCoatColors = [CoatColors]()
-    var allStudbooks = [Studbooks]()
     // MARK: - Outlets
-
+    
     @IBOutlet weak var notLoggedInPopupView: UIView!
     @IBOutlet weak var noFavoritesPopupView: UIView!
     @IBOutlet weak var notLoggedInMessageTitleLabel: UILabel!
+    @IBOutlet weak var eventKeyPopup: UIVisualEffectView!
+    @IBOutlet weak var eventKeyPopupView: UIView!
     @IBOutlet weak var notLoggedInMessageLabel: UILabel!
     @IBOutlet weak var loginButton: UIButton!
     @IBOutlet weak var noFavoritesMessageTitleLabel: UILabel!
     @IBOutlet weak var noFavoritesMessageLabel: UILabel!
+    @IBOutlet weak var eventKeyPopupMessageTitleLabel: UILabel!
+    @IBOutlet weak var eventKeyCancelButton: UIButton!
+    @IBOutlet weak var eventKeyPopupMessageLabel: UILabel!
+    @IBOutlet weak var eventKeyVerifyButton: UIButton!
     @IBOutlet weak var addButton: UIButton!
+    @IBOutlet weak var passphraseEventField: UITextField!
     
+    @IBAction func passphraseSubmitButtonTapped(_ sender: UIButton) {
+    }
     @IBOutlet var searchFooter: SearchFooter!
     @IBOutlet var tableView: UITableView!
     @IBOutlet weak var syncLabel: UILabel!
     @IBOutlet weak var progressView: UIProgressView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet var tableViewButtons: [UIButton]!
-    @IBOutlet weak var favoriteHorsesButton: UIButton!
-    @IBOutlet weak var personalHorsesButton: UIButton!
+    @IBOutlet weak var favoriteEventsButton: UIButton!
+    @IBOutlet weak var personalEventsButton: UIButton!
     @IBOutlet weak var notLoggedInPopup: UIVisualEffectView!
     @IBOutlet weak var noFavoritesPopup: UIVisualEffectView!
     
     @IBOutlet weak var stackViewButtons: UIStackView!
-    @IBOutlet weak var allHorsesButton: UIButton!
+    @IBOutlet weak var allEventsButton: UIButton!
     
+    @IBAction func passphraseCancelButtonTapped(_ sender: UIButton) {
+        eventKeyPopup.alpha = 0
+    }
     // MARK: - Outlet functions
-    @IBAction func allHorses(_ sender: UIButton) {
-        allHorsesButtonClicked()
+    @IBAction func allEvents(_ sender: UIButton) {
+        allEventsButtonClicked()
     }
-    @IBAction func favoriteHorses(_ sender: UIButton) {
-        favoriteHorsesButtonClicked()
+    @IBAction func favoriteEvents(_ sender: UIButton) {
+        favoriteEventsButtonClicked()
     }
     
-    @IBAction func personalHorses(_ sender: UIButton) {
-        personalHorsesButtonClicked()
+    @IBAction func personalEvents(_ sender: UIButton) {
+        personalEventsButtonClicked()
     }
-
+    
     @IBAction func loginButtonTapped(_ sender: UIButton) {
         notLoggedInPopup.alpha = 0
         // Go to homeviewcontroller
@@ -96,35 +106,26 @@ class HorsesViewController: UIViewController {
         
     }
     
+    @IBAction func addButtonTapped(_ sender: UIButton) {
+        noFavoritesPopup.alpha = 0
+        allEventsButtonClicked()
+    }
     @IBAction func unwindSegueCancel(_ sender: UIStoryboardSegue) {
         // Do nothing
     }
     
-    @IBAction func unwindSegueSave(_ sender: UIStoryboardSegue) {
-        // Post and request new data
-        if let sVC = sender.source as? AddFavoriteHorseViewController {
-            let newFavorites: [Horses] = sVC.favorites
-            let newPersonal: [Horses] = sVC.personal
-            if !newFavorites.isEmpty {
-                fetchAndStoreAsFavorite(tid: newFavorites.map { ($0.tid.first?.value)! } , addToList: true, list: "favorite")
-                tableView.reloadData()
-                patchFavoritesToUser(true, newFavorites, "favorite")
-            }
-            if !newPersonal.isEmpty {
-                fetchAndStoreAsFavorite(tid: newPersonal.map { ($0.tid.first?.value)! }, addToList: true, list: "personal")
-                tableView.reloadData()
-                patchFavoritesToUser(true, newPersonal, "personal")
-            }
-        }
-    }
     
     // MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("view did load horseviewController")
-        if let splitViewController = splitViewController {
+        print("view did load eventviewController")
+        if let splitViewController = self.appDelegate.window?.rootViewController?.childViewControllers[1] as? UISplitViewController {
+            let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count - 1] as! UINavigationController
+            navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
+            splitViewController.preferredDisplayMode = .allVisible
+            splitViewController.delegate = self
             let controllers = splitViewController.viewControllers
-            horseDetailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? HorseDetailViewController
+            eventDetailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? EventDetailViewController
         }
         self.tableView.delegate = self
         self.tableView.dataSource = self
@@ -132,7 +133,7 @@ class HorsesViewController: UIViewController {
         setupSearchController()
         setupPopup()
         
-    
+        
         // Do any additional setup after loading the view, typically from a nib.
         
         setupNavBar()
@@ -163,60 +164,62 @@ class HorsesViewController: UIViewController {
         noFavoritesPopup.alpha = 0
         self.tableView.isUserInteractionEnabled = true
         if selected[0] {
-            getHorseData("favorite") // preload with existing horses in CoreHorses
+            getEventData("favorite") // preload with existing events in CoreEvents
         } else if selected[1] {
-            getHorseData("personal")
+            getEventData("personal")
         } else {
-            getHorseData("all")
-            // Synchronize with online horse data
-            requestAnonymousHorseData()
+            getEventData("all")
+            // Synchronize with online event data
+            requestAnonymousEventData()
         }
         
         
     }
     
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
     
+    
+    
     // MARK: - get data
-    func getHorseData(_ list: String) {
+    func getEventData(_ list: String) {
         if list == "favorite" {
             // request favorites
-            favoriteHorsesButtonClicked()
+            favoriteEventsButtonClicked()
         } else if list == "personal" {
             // request personal
-            personalHorsesButtonClicked()
+            personalEventsButtonClicked()
         } else {
             preloadCoreData()
         }
     }
     
-    func requestAnonymousHorseData() {
-        print("requestAnonymousHorseData")
+    func requestAnonymousEventData() {
+        print("requestAnonymousEventData")
         let blockOperation = BlockOperation {
-            self.requestHorseData("https://jumpingtracker.com/rest/export/json/horses?_format=json", completion: { (result) in
-                self.horses = result
+            self.requestEventData("https://jumpingtracker.com/rest/export/json/events?_format=json", completion: { (result) in
+                self.events = result
                 
-                print("Result from requestHorseData arrived:")
+                print("Result from requestEventData arrived:")
                 Thread.printCurrent()
-                print("Update or save horses")
-                for items in result as [Horses] {
+                print("Update or save events")
+                for items in result as [Events] {
                     print("items: \(items)")
                     for t in items.tid {
                         if self.doesEntityExist(tid: Int(t.value)) {
                             // update
-                            let horse: Horses = items
-                                self.updateAttributes(horse)
+                            let event: Events = items
+                            self.updateAttributes(event)
                         } else { // insert new object
                             self.appDelegate.persistentContainer.performBackgroundTask({ (context) in
                                 print("storing data in Core Data...")
                                 // Store in core data
                                 Thread.printCurrent()
-                                let horse: Horse = NSEntityDescription.insertNewObject(forEntityName: "CoreHorses", into: context) as! Horse
-                                horse.allAtributes = items
+                                let event: Event = NSEntityDescription.insertNewObject(forEntityName: "CoreEvents", into: context) as! Event
+                                event.allAtributes = items
                                 do {
                                     try context.save()
                                 } catch {
@@ -234,25 +237,25 @@ class HorsesViewController: UIViewController {
                     self.syncLabel.isHidden = true
                     self.activityIndicator.isHidden = true
                     self.progressView.progress = 0.0
-                    if self.horses.isEmpty {
+                    if self.events.isEmpty {
                         self.tableView.isHidden = true
                     } else {
                         self.tableView.isHidden = false
                     }
                 }
             })
-                
+            
         }
         
         opQueue.addOperation(blockOperation)
         
         
     }
-
-    // MARK: request horse data
-    func requestHorseData(_ urlString: String, completion: @escaping ([Horses]) -> ()) {
+    
+    // MARK: request event data
+    func requestEventData(_ urlString: String, completion: @escaping ([Events]) -> ()) {
         /// function to get taxonomies from CMS
-        print("requesting horse data")
+        print("requesting event data")
         Thread.printCurrent()
         var username: String = ""
         var password: String = ""
@@ -293,21 +296,21 @@ class HorsesViewController: UIViewController {
                         alertController.addAction(actionSettings)
                         
                         self.present(alertController, animated: true, completion: nil)
-                        completion(self.horses)
+                        completion(self.events)
                     }
-                    var horses: [Horses]?
+                    var events: [Events]?
                     switch(response.result) {
                     case .success:
                         if response.result.value != nil {
                             do {
-                                horses = try JSONDecoder().decode([Horses].self, from: response.data!)
-                                print("horses decoded")
+                                events = try JSONDecoder().decode([Events].self, from: response.data!)
+                                print("events decoded")
                             } catch {
-                                print("Could not decode horses: \(error)")
-                                horses = []
+                                print("Could not decode events: \(error)")
+                                events = []
                             }
                         }
-                        completion(horses!)
+                        completion(events!)
                         break
                     case .failure(let error):
                         print("Request to authenticate failed with error: \(error)")
@@ -344,18 +347,16 @@ class HorsesViewController: UIViewController {
         }
         
     }
-
-    // MARK: request favorite or personal horse data
-    func requestFavoriteHorseData(_ urlString: String, completion: @escaping ([User]) -> ()) {
+    
+    // MARK: request favorite or personal event data
+    func requestPersonalEventData(_ urlString: String, completion: @escaping (_ success: [Events]) -> ()) {
         /// function to get taxonomies from CMS
-        print("requesting horse data")
+        print("requesting event data")
         Thread.printCurrent()
-        var username: String = ""
-        var password: String = ""
         if ConnectionCheck.isConnectedToNetwork() {
             
-            username = self.userDefault.value(forKey: "Username") as! String
-            password = self.getPasswordFromKeychain(username)
+            let username = self.userDefault.value(forKey: "Username") as! String
+            let password = self.getPasswordFromKeychain(username)
             let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
             let base64Credentials = credentialData.base64EncodedString(options: [])
             let headers: Dictionary<String, String> = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
@@ -386,18 +387,18 @@ class HorsesViewController: UIViewController {
                         
                         self.present(alertController, animated: true, completion: nil)
                     }
-                    var horses: [User]?
+                    var events: [Events]?
                     switch(response.result) {
                     case .success:
                         if response.result.value != nil {
                             do {
-                                horses = try JSONDecoder().decode([User].self, from: response.data!)
+                                events = try JSONDecoder().decode([Events].self, from: response.data!)
                             } catch {
-                                print("Could not decode horses: \(error)")
-                                horses = []
+                                print("Could not decode events: \(error)")
+                                events = []
                             }
                         }
-                        completion(horses!)
+                        completion(events!)
                         break
                     case .failure(let error):
                         print("Request to authenticate failed with error: \(error)")
@@ -439,6 +440,7 @@ class HorsesViewController: UIViewController {
         navigationItem.titleView?.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
         navigationItem.titleView?.tintColor = UIColor.FlatColor.Gray.IronGray
         
+        setupAddTargetIsNotEmptyTextFields()
         progressView.backgroundColor = UIColor.FlatColor.Gray.WhiteSmoke
         progressView.progress = 0.0
         progressView.progressViewStyle = .bar
@@ -456,8 +458,8 @@ class HorsesViewController: UIViewController {
             button.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
             
         }
-        personalHorsesButton.addLeftBorder(borderColor: UIColor.FlatColor.Gray.WhiteSmoke, borderWidth: 1.0)
-        allHorsesButton.addLeftBorder(borderColor: UIColor.FlatColor.Gray.WhiteSmoke, borderWidth: 1.0)
+        personalEventsButton.addLeftBorder(borderColor: UIColor.FlatColor.Gray.WhiteSmoke, borderWidth: 1.0)
+        allEventsButton.addLeftBorder(borderColor: UIColor.FlatColor.Gray.WhiteSmoke, borderWidth: 1.0)
         let actBarButton = UIBarButtonItem(customView: activityIndicator)
         navigationItem.setLeftBarButton(actBarButton, animated: true)
         let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped))]
@@ -485,7 +487,7 @@ class HorsesViewController: UIViewController {
             tableView.tableFooterView = searchFooter
             searchController.searchResultsUpdater = self
             searchController.obscuresBackgroundDuringPresentation = false
-            searchController.searchBar.placeholder = "Search horses"
+            searchController.searchBar.placeholder = "Search events"
             navigationItem.searchController = searchController // Add the searchbar to the navigationItem
         } else {
             // ???
@@ -503,7 +505,7 @@ class HorsesViewController: UIViewController {
         notLoggedInPopup.alpha = 0
         notLoggedInPopup.layer.cornerRadius = 15
         notLoggedInPopup.layer.masksToBounds = true
-    
+        
         notLoggedInPopupView.layer.borderWidth = 1.5
         notLoggedInPopupView.layer.borderColor = UIColor.FlatColor.Gray.IronGray.cgColor
         notLoggedInPopupView.layer.cornerRadius = 15
@@ -520,10 +522,8 @@ class HorsesViewController: UIViewController {
         loginButton.tintColor = UIColor.white
         
         noFavoritesPopup.alpha = 0
-        print("position: not determined: \(noFavoritesPopup.frame)")
         originalCenter = noFavoritesPopup.center
         noFavoritesPopup.center = self.originalCenter
-        print("position: adjusted: \(noFavoritesPopup.frame)")
         noFavoritesPopup.layer.cornerRadius = 15
         noFavoritesPopup.layer.masksToBounds = true
         noFavoritesPopupView.layer.borderWidth = 1.5
@@ -533,7 +533,6 @@ class HorsesViewController: UIViewController {
         noFavoritesPopupView.backgroundColor = UIColor.FlatColor.Gray.WhiteSmoke
         noFavoritesMessageLabel.adjustsFontSizeToFitWidth = true
         noFavoritesMessageTitleLabel.adjustsFontSizeToFitWidth = true
-        print("position end of setup: \(noFavoritesPopup.frame)")
         //noFavoritesPopupView.setGradientBackground()
         addButton.layer.borderColor = UIColor.FlatColor.Gray.IronGray.cgColor
         addButton.layer.borderWidth = 1.5
@@ -541,7 +540,32 @@ class HorsesViewController: UIViewController {
         addButton.layer.cornerRadius = 5
         addButton.layer.masksToBounds = true
         addButton.tintColor = UIColor.white
-        print("position button ready: \(noFavoritesPopup.frame)")
+        
+        eventKeyPopup.alpha = 0
+        originalCenter = eventKeyPopup.center
+        eventKeyPopup.center = self.originalCenter
+        eventKeyPopup.layer.cornerRadius = 15
+        eventKeyPopup.layer.masksToBounds = true
+        eventKeyPopup.layer.borderWidth = 1.5
+        eventKeyPopupView.layer.borderColor = UIColor.FlatColor.Gray.IronGray.cgColor
+        eventKeyPopupView.layer.cornerRadius = 15
+        eventKeyPopupView.layer.masksToBounds = true
+        eventKeyPopupView.backgroundColor = UIColor.FlatColor.Gray.WhiteSmoke
+        eventKeyPopupMessageLabel.adjustsFontSizeToFitWidth = true
+        eventKeyPopupMessageTitleLabel.adjustsFontSizeToFitWidth = true
+
+        eventKeyVerifyButton.layer.borderColor = UIColor.FlatColor.Gray.IronGray.cgColor
+        eventKeyVerifyButton.layer.borderWidth = 1.5
+        eventKeyVerifyButton.backgroundColor = UIColor.FlatColor.Gray.AlmondFrost
+        eventKeyVerifyButton.layer.cornerRadius = 5
+        eventKeyVerifyButton.layer.masksToBounds = true
+        eventKeyVerifyButton.tintColor = UIColor.white
+        eventKeyCancelButton.layer.borderColor = UIColor.FlatColor.Gray.IronGray.cgColor
+        eventKeyCancelButton.layer.borderWidth = 1.5
+        eventKeyCancelButton.backgroundColor = UIColor.FlatColor.Gray.AlmondFrost
+        eventKeyCancelButton.layer.cornerRadius = 5
+        eventKeyCancelButton.layer.masksToBounds = true
+        eventKeyCancelButton.tintColor = UIColor.white
     }
     // MARK: - request data
     
@@ -611,7 +635,7 @@ class HorsesViewController: UIViewController {
     }
     
     // MARK: request user data
-    func requestJSON(_ urlString: String, headers: Dictionary<String, String>, success: @escaping (_ favoriteHorses: [User.FavHorses], _ personalHorses: [User.PerHorses]) -> Void, failure: @escaping (_ error: Error?) -> Void)  {
+    func requestJSON(_ urlString: String, headers: Dictionary<String, String>, success: @escaping (_ result: [Events]) -> Void, failure: @escaping (_ error: Error?) -> Void)  {
         print("Requesting JSON...")
         
         Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
@@ -623,12 +647,13 @@ class HorsesViewController: UIViewController {
                 case .success:
                     print("data: \(response.data!)")
                     if response.result.value != nil {
-                    
+                        var events: [Events] = []
                         do {
-                            let userData: User = try JSONDecoder().decode(User.self, from: response.data!)
-                            let favoriteHorses = userData.favHorses
-                            let personalHorses = userData.perHorses
-                            success(favoriteHorses!, personalHorses!)
+                            let eventData: [Events] = try [JSONDecoder().decode(Events.self, from: response.data!)]
+                            if eventData.first != nil {
+                                events = eventData
+                            }
+                            success(events)
                             print("userdata decoded")
                         } catch {
                             print("Could not decode userdata")
@@ -636,7 +661,7 @@ class HorsesViewController: UIViewController {
                     }
                     break
                 case .failure(let error):
-                    print("Request to authenticate failed with error: \(error)")
+                    print("Request to obtain favorite/personal events failed with error: \(error)")
                     failure(error)
                     break
                 }
@@ -644,87 +669,95 @@ class HorsesViewController: UIViewController {
     }
     
     
+    // MARK: - enable verify button when fields are filled
+    func setupAddTargetIsNotEmptyTextFields() {
+        eventKeyVerifyButton.isEnabled = false
+        passphraseEventField.addTarget(self, action: #selector(textFieldIsNotEmpty), for: .editingChanged)
+    }
     
+    @objc func textFieldIsNotEmpty(sender: UITextField) {
+        sender.text = sender.text?.trimmingCharacters(in: .whitespaces)
+        
+        guard
+            let eventKey = passphraseEventField.text, !eventKey.isEmpty
+            else
+        {
+            self.eventKeyVerifyButton.isEnabled = false
+            self.eventKeyVerifyButton.alpha = 0.5
+            return
+        }
+        eventKeyVerifyButton.isEnabled = true
+        eventKeyVerifyButton.alpha = 1.0
+    }
     
     // MARK: Patch favorites to User
-    func patchFavoritesToUser(_ add: Bool, _ newFavorites: [Horses], _ list: String) {
-        // Try to post only the horse ID!!!
+    func patchFavoritesToEvents(_ add: Bool, _ newFavorites: [Events], _ list: String) {
+        // Try to post only the event ID!!!
         if ConnectionCheck.isConnectedToNetwork() {
             // Run in operationQueue
             let patchToFavoritesCMS = BlockOperation {
-                var newPatch: User?
-                var newUserFav: [User.FavHorses] = []
-                var newUserPer: [User.PerHorses] = []
+                var newPatch: [Events] = []
+                var newEventFav: [Events] = []
                 let username = self.userDefault.string(forKey: "Username")
                 let password = self.getPasswordFromKeychain(username!)
                 let credentialData = "\(username!):\(password)".data(using: String.Encoding.utf8)!
                 let base64Credentials = credentialData.base64EncodedString(options: [])
-                let loginRequest = ["username": username!, "password": password as Any]
                 let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
                 
                 // fetch new token
-                self.requestToken(parameters: loginRequest, headers: headers, success: { (token) in
-                    self.userDefault.set(token, forKey: "token")
-                    print("Token successfully received!")
-                    let uid = self.userDefault.value(forKey: "UID")
-                    // fetch user data and collect existing favorite (and personal horses)
-                    self.requestJSON("https://jumpingtracker.com/user/\(uid!)?_format=json", headers: headers, success: { (favoriteHorses, personalHorses) in
-                        
-                        if list == "favorite" {
-                            if add {
-                                newUserFav = favoriteHorses
-                            }
-                            // add new favorites to existing favorites
-                            if newFavorites.isEmpty {
-                                newUserFav = []
-                            } else {
-                                for fav in newFavorites {
-                                    newUserFav.append(User.FavHorses(id: Int((fav.tid.first?.value)!), type: "taxonomy_term", uuid: (fav.uuid.first?.value)!, url: "/taxonomy/term/\((fav.tid.first?.value)!)"))
-                                }
-                            }
-                            newPatch = User(uid: [uid as! User.UID], favHorses: favoriteHorses)
-                        } else if list == "personal" {
-                            if add {
-                                newUserPer = personalHorses
-                            }
-                            if newFavorites.isEmpty {
-                                newUserPer = []
-                            } else {
-                                for per in newFavorites {
-                                    newUserPer.append(User.PerHorses(id: Int((per.tid.first?.value)!), type: "taxonomy_term", uuid: (per.uuid.first?.value)!, url: "/taxonomy/term/\((per.tid.first?.value)!)"))
-                                }
-                            }
-                            newPatch = User(uid: [uid as! User.UID], perHorses: newUserPer)
+                
+                let uid = self.userDefault.value(forKey: "UID")
+                // fetch user data and collect existing favorite (and personal events)
+                
+                self.requestJSON("https://jumpingtracker.com/rest/export/json/\(list)_events/\(uid!)?_format=json", headers: headers, success: { (result) in
+                    
+                    if list == "favorite" {
+                        if add {
+                            newEventFav = result // Get current favorites
                         }
-                        
-                        
-                        
-                        // Encode array of dictionaries to JSON
-                        let encodedDataUserPatch = try? JSONEncoder().encode(newPatch)
-                        // patch user data with new favorite horses to field_favorite_horses
-                        // Alamofire patch
-                        let parameters = try? JSONSerialization.jsonObject(with: encodedDataUserPatch!) as? [String:Any]
-                        // header with token for JWT_auth
-                        //let headers = ["Authorization": "Bearer: \(self.userDefault.value(forKey: "token")!)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-                        // header with credentials for basic_auth
-                        let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-                        Alamofire.request("https://jumpingtracker.com/user/\(uid!)?_format=json", method: .patch, parameters: parameters!, encoding: JSONEncoding.default, headers: headers).responseJSON { response in
-                            switch response.result {
-                            case .success(let JSON):
-                                print("Success with JSON: \(JSON)")
-                                self.resyncTapped()
-                                break
-                            case .failure(let error):
-                                print("Request failed with error: \(error)")
-                                break
+                        // add new favorites to existing favorites
+                        if newFavorites.isEmpty {
+                            newEventFav = []
+                        } else {
+                            for fav in newFavorites {
+                                newEventFav.append(fav)
                             }
                         }
-                    }, failure: { (error) in
-                        print("UID failure.")
-                    })
+                        for event in newEventFav {
+                            newPatch.append(event)
+                        }
+                        
+                    }
+                
+                    
+
+                    
+                    
+                    
+                    // Encode array of dictionaries to JSON
+                    let encodedDataUserPatch = try? JSONEncoder().encode(newPatch)
+                    // patch user data with new favorite events to field_favorite_events
+                    // Alamofire patch
+                    let parameters = try? JSONSerialization.jsonObject(with: encodedDataUserPatch!) as? [String:Any]
+                    // header with token for JWT_auth
+                    //let headers = ["Authorization": "Bearer: \(self.userDefault.value(forKey: "token")!)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+                    // header with credentials for basic_auth
+                    let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+                    Alamofire.request("https://jumpingtracker.com/rest/export/json/events/\(uid!)?_format=json", method: .patch, parameters: parameters!, encoding: JSONEncoding.default, headers: headers).responseJSON { response in
+                        switch response.result {
+                        case .success(let JSON):
+                            print("Success with JSON: \(JSON)")
+                            self.resyncTapped()
+                            break
+                        case .failure(let error):
+                            print("Request failed with error: \(error)")
+                            break
+                        }
+                    }
                 }, failure: { (error) in
-                    print("Token failure")
+                    print("UID failure.")
                 })
+                
             }
             opQueue.addOperation(patchToFavoritesCMS)
         } else {
@@ -738,7 +771,7 @@ class HorsesViewController: UIViewController {
         view.pin(to: stackView)
     }
     
-
+    
     // MARK: - Other functions
     // MARK: update progress view
     func updateProgress(progress: Float) {
@@ -747,50 +780,54 @@ class HorsesViewController: UIViewController {
     }
     
     // MARK: favorites button tapped
-    func favoriteHorsesButtonClicked() {
+    func favoriteEventsButtonClicked() {
         selected = [true, false, false]
-        allHorsesButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
-        favoriteHorsesButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
-        personalHorsesButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
-        obtainFavoritePersonalHorses("favorite")
+        allEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
+        favoriteEventsButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
+        personalEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
+        obtainPersonalEvents(list: "favorite")
     }
     
     
     
     // MARK: personal button tapped
-    func personalHorsesButtonClicked() {
+    func personalEventsButtonClicked() {
         selected = [false, true, false]
-        allHorsesButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
-        favoriteHorsesButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
-        personalHorsesButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
-        obtainFavoritePersonalHorses("personal")
+        allEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
+        favoriteEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
+        personalEventsButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
+        obtainPersonalEvents(list: "personal")
     }
     
-    // MARK: - obtain horses from favorite or personal
-    func obtainFavoritePersonalHorses(_ list: String) {
+    // MARK: - obtain events from favorite or personal
+    func obtainPersonalEvents(list: String) {
         notLoggedInPopup.alpha = 0
         noFavoritesPopup.alpha = 0
+        eventKeyPopup.alpha = 0
         self.activityIndicator.isHidden = false
         preloadCoreData() // Fetch data from core. Filtered on button selection.
         self.tableView.reloadData()
         
         if userDefault.value(forKey: "UID") != nil {
             let uid = userDefault.value(forKey: "UID") as! String
-            let favoriteHorseBlockOperation = BlockOperation {
-                self.requestFavoriteHorseData("https://jumpingtracker.com/rest/export/json/\(list)_horses/\(uid)!)?_format=json", completion: { result in
+            let favoriteEventBlockOperation = BlockOperation {
+                self.requestPersonalEventData("https://jumpingtracker.com/rest/export/json/\(list)_events/\(uid)!)?_format=json", completion: { result in
                     
-                    let userdata: [User] = result as [User]
-                    // Convert id from [User.FavHorses]
-                    self.horses = self.listHorses(list, userdata)
-                    if self.horses.isEmpty {
+                    let eventdata: [Events] = result as [Events]
+                    self.events = eventdata
+                    if self.events.isEmpty {
                         DispatchQueue.main.async {
-                            self.showNoResults(title: "No \(list) horses", message: "You have not added any \(list) horses yet.")
+                            if list == "personal" {
+                                self.showNoResults(title: "No \(list) events", message: "Click on the plus sign to create a new event.")
+                            } else if list == "favorite" {
+                                self.showNoResults(title: "No \(list) events", message: "Go to 'All' events and swipe left to make an event your favorite.")
+                            }
                         }
                     } else {
                         self.resetFavorites(bool: false, list: list)
                         
                         var tids: Array<Int32> = []
-                        for h in self.horses {
+                        for h in self.events {
                             tids.append(Int32(h.tid[0].value))
                         }
                         
@@ -810,73 +847,53 @@ class HorsesViewController: UIViewController {
                     }
                 })
             }
-            opQueue.addOperation(favoriteHorseBlockOperation)
+            opQueue.addOperation(favoriteEventBlockOperation)
         } else {
-            print("Login to view your \(list) horses or register to add \(list) horses.")
+            print("Login to view your \(list) events or register to add \(list) events.")
             self.progressView.isHidden = true
             self.syncLabel.isHidden = true
             self.activityIndicator.isHidden = true
             self.progressView.progress = 0.0
             // Show label over tableView
-            showNotLoggedInMessage("Login to view your \(list) horses. Registered users can add \(list) horses to their account.")
+            showNotLoggedInMessage("Login to view your \(list) events. Registered users can add \(list) events to their account.")
             
         }
     }
     
-    // MARK: Userdata -> [User.FavHorses]
-    func listHorses(_ list: String, _ userdata: [User]) -> [Horses] {
-        var idArray: Array<Int> = []
-        var horses: [Horses] = []
-        if list == "favorite" {
-            for data in userdata {
-                for id in data.favHorses! {
-                    idArray.append(id.id)
-                }
-            }
-        } else if list == "personal" {
-            for data in userdata {
-                for id in data.perHorses! {
-                    idArray.append(id.id)
-                }
-            }
-        }
-        for id in idArray {
-            var horse: Horses
-            let fetch = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
-            fetch.predicate = NSPredicate(format: "tid == %d", id)
-            do {
-                let result: [Horse] = try appDelegate.getContext().fetch(fetch) as! [Horse]
-                for items in result {
-                    horse = items.allAtributes
-                    horses.append(horse)
-                }
-            } catch {
-                print("could not fetch")
-            }
-        }
-        return horses
-    }
+    
     
     // MARK: all button tapped
-    func allHorsesButtonClicked() {
+    func allEventsButtonClicked() {
         noFavoritesPopup.alpha = 0
         notLoggedInPopup.alpha = 0
+        eventKeyPopup.alpha = 0
         selected = [false, false, true]
         preloadCoreData()
         self.tableView.reloadData()
-        allHorsesButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
-        favoriteHorsesButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
-        personalHorsesButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
-        let allHorsesBlockOperation = BlockOperation {
-            self.requestHorseData("https://jumpingtracker.com/rest/export/json/horses?_format=json", completion: { result in
-                self.horses = result
+        allEventsButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
+        favoriteEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
+        personalEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
+        let allEventsBlockOperation = BlockOperation {
+            self.requestEventData("https://jumpingtracker.com/rest/export/json/events?_format=json", completion: { result in
+                self.events = result
+                var passedEvents: Array<Events> = []
+                var upcomingEvents: Array<Events> = []
+                for event in self.events {
+                    if self.datepassed(event.date[0].value) {
+                        passedEvents.append(event)
+                    } else {
+                        upcomingEvents.append(event)
+                    }
+                }
+                self.splitEvents["passed"] = passedEvents
+                self.splitEvents["upcoming"] = upcomingEvents
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                     self.progressView.isHidden = true
                     self.syncLabel.isHidden = true
                     self.activityIndicator.isHidden = true
                     self.progressView.progress = 0.0
-                    if self.horses.isEmpty {
+                    if self.events.isEmpty {
                         self.tableView.isHidden = true
                     } else {
                         self.tableView.isHidden = false
@@ -884,7 +901,7 @@ class HorsesViewController: UIViewController {
                 }
             })
         }
-        opQueue.addOperation(allHorsesBlockOperation)
+        opQueue.addOperation(allEventsBlockOperation)
     }
     
     // MARK: get password from keychain
@@ -915,7 +932,25 @@ class HorsesViewController: UIViewController {
             return ""
         }
     }
-    
+    func dateStringToDate(_ dateString: String) -> Date {
+        let dateFormatter = DateFormatter()
+        dateFormatter.calendar = Calendar(identifier: .iso8601)
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'hh:mm:ss"
+        if let date = dateFormatter.date(from: dateString) {
+            return date
+        } else {
+            print("could not convert datestring to date")
+            return Date()
+        }
+        
+    }
+    func datepassed(_ dateString: String) -> Bool {
+        if dateStringToDate(dateString) < Date() {
+            return true
+        } else {
+            return false
+        }
+    }
     // MARK: sanitize time from json
     func sanitizeHourFromJson(_ dateString: String) -> String {
         let dateFormatter = DateFormatter()
@@ -979,8 +1014,8 @@ class HorsesViewController: UIViewController {
         UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 0.3, initialSpringVelocity: 0, options: .allowUserInteraction, animations: {
             self.notLoggedInPopup.alpha = 1
             self.notLoggedInPopup.transform = .identity
-            }) { (success) in
-                
+        }) { (success) in
+            
         }
         notLoggedInPopup.alpha = 1
         //tableView.isUserInteractionEnabled = true
@@ -1001,7 +1036,7 @@ class HorsesViewController: UIViewController {
     
     // MARK: filter content for search text
     func filterContentForSearchText(_ searchText: String, scope: String = "All") {
-        filteredHorses = horses.filter({( horse : Horses) -> Bool in
+        filteredEvents = events.filter({( event : Events) -> Bool in
             var newScope: String = ""
             if scope == "Jumping" {
                 newScope = "Show jumping"
@@ -1015,7 +1050,7 @@ class HorsesViewController: UIViewController {
                 }
             }
             var discNameArray: Array<String> = []
-            for discID in (horse.discipline?.map { $0.id })! {
+            for discID in (event.eventtype.map { $0.id }) {
                 let discName = getName("CoreDisciplines", Int(discID), "name")
                 discNameArray.append(discName)
             }
@@ -1024,17 +1059,29 @@ class HorsesViewController: UIViewController {
             if searchBarIsEmpty() {
                 return doesCategoryMatch
             } else {
-                return doesCategoryMatch && (horse.name.first?.value.lowercased().contains(searchText.lowercased()))!
+                return doesCategoryMatch && (event.title.first?.value.lowercased().contains(searchText.lowercased()))!
             }
         })
+        var passedEvents: Array<Events> = []
+        var upcomingEvents: Array<Events> = []
+        for event in self.filteredEvents {
+            if datepassed(event.date[0].value) {
+                passedEvents.append(event)
+            } else {
+                upcomingEvents.append(event)
+            }
+        }
+        splitFilteredEvents["passed"] = passedEvents
+        splitFilteredEvents["upcoming"] = upcomingEvents
+        print("splitfiltered: \(splitFilteredEvents)")
         tableView.reloadData()
     }
     
     // MARK: - Core Data
     func preloadCoreData() {
         print("preloading core data")
-        self.horses = []
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
+        self.events = []
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreEvents")
         if selected[0] {
             fetchRequest.predicate = NSPredicate(format: "favorite == YES")
         } else if selected[1] {
@@ -1047,13 +1094,13 @@ class HorsesViewController: UIViewController {
         } catch {
             print("error fetching count")
         }
-        print("preloading: \(entitiesCount) paarden")
+        print("preloading: \(entitiesCount) events")
         if entitiesCount > 0 {
             do {
                 let result = try appDelegate.getContext().fetch(fetchRequest)
-                for data in result as! [Horse] {
-                    let horse: Horses = data.allAtributes
-                    self.horses.append(horse)
+                for data in result as! [Event] {
+                    let event: Events = data.allAtributes
+                    self.events.append(event)
                 }
             } catch {
                 print("error executing fetch request: \(error)")
@@ -1061,13 +1108,25 @@ class HorsesViewController: UIViewController {
         } else {
             print("No attributes in entity")
         }
+        var passedEvents: Array<Events> = []
+        var upcomingEvents: Array<Events> = []
+        for event in self.events {
+            if datepassed(event.date[0].value) {
+                passedEvents.append(event)
+            } else {
+                upcomingEvents.append(event)
+            }
+        }
+        splitEvents["passed"] = passedEvents
+        splitEvents["upcoming"] = upcomingEvents
+        
     }
     
     
     func doesEntityExist(tid: Int) -> Bool {
         let context = appDelegate.persistentContainer.viewContext
-
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
+        
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreEvents")
         fetchRequest.predicate = NSPredicate(format: "tid == %d", tid)
         fetchRequest.includesSubentities = false
         
@@ -1092,30 +1151,30 @@ class HorsesViewController: UIViewController {
         }
     }
     
-    func fetchFavPerList(list: String) -> [Horses] {
-        var favPerHorses: [Horses] = []
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
+    func fetchFavPerList(list: String) -> [Events] {
+        var favPerEvents: [Events] = []
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreEvents")
         fetchRequest.predicate = NSPredicate(format: "\(list) == YES")
         fetchRequest.includesSubentities = false
         
         do {
             let results = try appDelegate.getContext().fetch(fetchRequest)
-            for item in results as! [Horse] {
-                let horse = item.allAtributes
-                favPerHorses.append(horse)
+            for item in results as! [Event] {
+                let event = item.allAtributes
+                favPerEvents.append(event)
             }
         } catch {
             print("Could not update: \(error)")
         }
-        return favPerHorses
+        return favPerEvents
     }
     
-    func fetchFavorites(entity: String, value: String, key: String) -> [Horses] {
-        var allFavorites: [Horses] = []
+    func fetchFavorites(entity: String, value: String, key: String) -> [Events] {
+        var allFavorites: [Events] = []
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity)
         fetchRequest.predicate = NSPredicate(format: "\(value) == \(key)")
         do {
-            allFavorites = try appDelegate.getContext().fetch(fetchRequest) as! [Horses]
+            allFavorites = try appDelegate.getContext().fetch(fetchRequest) as! [Events]
         } catch {
             print("Could not fetch")
         }
@@ -1123,7 +1182,7 @@ class HorsesViewController: UIViewController {
     }
     
     func updateFavorite(_ tid: Int, _ favorite: Bool, _ list: String) {
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreEvents")
         fetchRequest.predicate = NSPredicate(format: "tid == %d", tid)
         fetchRequest.includesSubentities = false
         
@@ -1141,11 +1200,11 @@ class HorsesViewController: UIViewController {
     
     func resetFavorites(bool: Bool, list: String) {
         // Bewust op de main queue om geen conflicten te krijgen met de hierop volgende functie om favorieten toe te voegen!
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreEvents")
         let predicate = NSPredicate(format: "\(list) == YES")
         fetchRequest.predicate = predicate
         fetchRequest.includesSubentities = false
-    
+        
         var results: [NSManagedObject] = []
         do {
             results = try appDelegate.getContext().fetch(fetchRequest) as! [NSManagedObject]
@@ -1159,13 +1218,13 @@ class HorsesViewController: UIViewController {
         
     }
     
-    func updateAttributes(_ horse: Horses) {
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
-        fetchRequest.predicate = NSPredicate(format: "tid == %d", horse.tid)
+    func updateAttributes(_ event: Events) {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreEvents")
+        fetchRequest.predicate = NSPredicate(format: "tid == %d", event.tid)
         fetchRequest.includesSubentities = false
-        var results: [Horses] = []
+        var results: [Events] = []
         do {
-            results = try appDelegate.getContext().fetch(fetchRequest) as! [Horses]
+            results = try appDelegate.getContext().fetch(fetchRequest) as! [Events]
         } catch {
             print("error executing fetch request: \(error)")
         }
@@ -1173,9 +1232,9 @@ class HorsesViewController: UIViewController {
             print("storing data in Core Data...")
             // Store in core data
             Thread.printCurrent()
-            for items in results as [Horses] {
-                let horse: Horse = NSEntityDescription.insertNewObject(forEntityName: "CoreHorses", into: context) as! Horse
-                horse.allAtributes = items
+            for items in results as [Events] {
+                let event: Event = NSEntityDescription.insertNewObject(forEntityName: "CoreEvents", into: context) as! Event
+                event.allAtributes = items
             }
             do {
                 try context.save()
@@ -1190,13 +1249,14 @@ class HorsesViewController: UIViewController {
     @objc func resyncTapped() {
         notLoggedInPopup.alpha = 0
         noFavoritesPopup.alpha = 0
-        // Synchronize horses
+        eventKeyPopup.alpha = 0
+        // Synchronize events
         if selected[0] {
-            favoriteHorses(favoriteHorsesButton)
+            favoriteEvents(favoriteEventsButton)
         } else if selected[1] {
-            personalHorses(personalHorsesButton)
+            personalEvents(personalEventsButton)
         } else {
-            allHorses(allHorsesButton)
+            allEvents(allEventsButton)
         }
     }
     
@@ -1208,38 +1268,46 @@ class HorsesViewController: UIViewController {
         }
     }
     @objc func addTapped() {
-        if selected[0] || selected[1] {
-            // Add horse to favo or personal
-            let mainStoryboard = UIStoryboard(name: "Main", bundle: Bundle.main)
-            let vc: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: "AddFavorite") as! AddFavoriteHorseViewController
-            let navController = UINavigationController(rootViewController: vc)
-            self.present(navController, animated: true, completion: nil)
-            //present(AddFavoriteHorseViewController(), animated: true, completion: nil)
+        if selected[0] {
+            // Add event to favo
+            allEventsButtonClicked()
+            UIView.animate(withDuration: 1, delay: 0.3, usingSpringWithDamping: 0.5, initialSpringVelocity: 0, options: .curveEaseIn, animations: {
+                self.noFavoritesPopup.alpha = 1.0
+            }) { (bool) in
+                UIView.animate(withDuration: 1, delay: 1.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 0, options: .curveEaseIn, animations: {
+                    self.noFavoritesPopup.alpha = 0.0
+                }, completion: nil )}
+            
+        } else if selected[1] {
+            // Ask for event identification to add an existing(!) event to personal list
+            UIView.animate(withDuration: 1, delay: 0.3, usingSpringWithDamping: 0.5, initialSpringVelocity: 0, options: .allowUserInteraction, animations: {
+                self.eventKeyPopup.alpha = 1.0
+            }, completion: nil)
         } else {
-            // Add a horse to the list
+            // Add an event to the list
             let mainStoryboard = UIStoryboard(name: "Main", bundle: Bundle.main)
-            let vc: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: "AddNewHorse") as! AddNewHorseViewController
+            let vc: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: "AddNewEvent") as! AddNewEventViewController
             let navController = UINavigationController(rootViewController: vc)
             self.present(navController, animated: true, completion: nil)
         }
-     }
+    }
     
     
     // MARK: - prepare segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "segueToHorseDetail" {
+        if segue.identifier == "segueToEventDetail" {
             if let indexPath = tableView.indexPathForSelectedRow {
-                let horse: Horses
+                let event: Events
                 if isFiltering() {
-                    horse = filteredHorses[indexPath.row]
+                    event = filteredEvents[indexPath.row]
                 } else {
-                    horse = horses[indexPath.row]
+                    event = events[indexPath.row]
                 }
-                let controller = (segue.destination as! UINavigationController).topViewController as! HorseDetailViewController
-                controller.detailHorse = horse
+                let controller = (segue.destination as! UINavigationController).topViewController as! EventDetailViewController
+                controller.detailEvent = event
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true
-                controller.navigationController?.title = horse.name.first?.value
+                controller.navigationController?.title = event.title.first?.value
             }
         }
     }
@@ -1256,69 +1324,115 @@ class HorsesViewController: UIViewController {
         }
         return result!.value(forKey: key) as! String
     }
+    
+    func passedEventsExist(filter: Bool) -> Bool {
+        let list = filter ? self.filteredEvents : self.events
+        for event in (list) {
+            if datepassed(event.date[0].value) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    func upcomingEventsExist(filter: Bool) -> Bool {
+        let list = filter ? self.filteredEvents : self.events
+        for event in list {
+            if !datepassed(event.date[0].value) {
+                return true
+            }
+        }
+        return false
+    }
 }
 
 // MARK: - Extensions
 // MARK: tableView extension
-extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if isFiltering() {
-            searchFooter.setIsFilteringToShow(filteredItemCount: filteredHorses.count, of: horses.count)
-            return filteredHorses.count
+extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        var numberofSections: Int = 0
+        var list = isFiltering() ? splitFilteredEvents : splitEvents
+        if (list["passed"]?.count)! > 0 {
+            numberofSections += 1
+        }
+        if (list["upcoming"]?.count)! > 0 {
+            numberofSections += 1
+        }
+        return numberofSections
+    }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        let list = isFiltering() ? splitFilteredEvents : splitEvents
+
+        switch (section) {
+        case 0:
+            if list["upcoming"]?.count == 0 {
+                if (list["passed"]?.count)! > 0 {
+                    return "Passed events"
+                } else {
+                    return "No events"
+                }
+            } else {
+                return "Upcoming events"
+            }
+            
+        default:
+            if (list["passed"]?.count)! > 0 {
+                return "Passed events"
+            } else {
+                return "No passed events"
+            }
         }
         
-        searchFooter.setNotFiltering()
-        return horses.count
     }
-
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        let list = isFiltering() ? splitFilteredEvents : splitEvents
+        switch (section) {
+        case 0:
+            if list["upcoming"]!.count == 0 {
+                return list["passed"]!.count
+            }
+            return list["upcoming"]!.count
+        default:
+            return list["passed"]!.count
+        }
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "HorseTableCell", for: indexPath) as? HorseTableCell else {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "EventsTableCell", for: indexPath) as? EventsTableCell else {
             fatalError("Unexpected Index Path")
         }
-        let horse: Horses
-        if isFiltering() {
-            horse = filteredHorses[indexPath.row]
-        } else {
-            horse = horses[indexPath.row]
-        }
+        
+        var event: Events
         cell.selectionStyle = .gray
         cell.layer.cornerRadius = 0
         cell.layer.masksToBounds = true
         cell.layer.borderWidth = 0
         
         self.tableView.isHidden = false
-        cell.horseName.text = horse.name.first?.value
-        let idArray: Array<Int32> = (horse.studbook?.map { $0.id })!
-        var acroArray: Array<String> = []
-        if idArray.count > 0 {
-            for id in idArray {
-                let acroString = getName("CoreStudbooks", Int(id), "acro")
-                acroArray.append(acroString)
-            }
-        } else {
-            acroArray = [""]
-        }
-        cell.studbook.text = acroArray.joined(separator: ", ")
-        cell.horseOwner.text = horse.owner?.first?.owner
-        
-        if horse.birthday?.first != nil {
-            // Optional value birthday
-            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreJaartallen")
-            fetchRequest.predicate = NSPredicate(format: "tid == %d", (horse.birthday?.first?.id)!)
-            var jaartal: String = ""
-            do {
-                let result = try self.appDelegate.getContext().fetch(fetchRequest)
-                for r in result as! [Year] {
-                    let jaar = r.allAtributes
-                    jaartal = (jaar.year.first?.year)!
+        switch (indexPath.section) {
+        case 0:
+            if isFiltering() {
+                if splitFilteredEvents["upcoming"]!.count == 0 {
+                    event = splitFilteredEvents["passed"]![indexPath.row]
+                } else {
+                    event = splitFilteredEvents["upcoming"]![indexPath.row]
                 }
-                cell.birthDay.text = jaartal
-            } catch {
-                cell.birthDay.text = ""
+            } else {
+                event = splitEvents["upcoming"]![indexPath.row]
+                if splitEvents["upcoming"]!.count == 0 {
+                    event = splitEvents["passed"]![indexPath.row]
+                }
             }
-        } else {
-            cell.birthDay.text = ""
+        default:
+            if isFiltering() {
+                event = splitFilteredEvents["passed"]![indexPath.row]
+            } else {
+                event = splitEvents["passed"]![indexPath.row]
+            }
         }
+        cell.event.text = event.title.first?.value
         return cell
     }
     
@@ -1333,24 +1447,24 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Quickly remove from tableview
-            print("list of horses before deleting: \(self.horses.map { $0.tid })")
-            let tid: Array<Int32> = self.horses[indexPath.row].tid.map { $0.value }
-            self.horses.remove(at: indexPath.row)
+            print("list of events before deleting: \(self.events.map { $0.tid })")
+            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
+            self.events.remove(at: indexPath.row)
             tableView.reloadData()
             
             
             if selected[0] {
-                print("list of horses: \(self.horses.map { $0.tid })")
+                print("list of events: \(self.events.map { $0.tid })")
                 // Patch userdata with new list of favorites
                 self.resetFavorites(bool: false, list: "favorite") // Main queue
-                self.patchFavoritesToUser(false, self.horses, "favorite") // OperationQueue
+                self.patchFavoritesToEvents(false, self.events, "favorite") // OperationQueue
                 // Adjust in Core Data
                 fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "favorite")
             } else if selected[1] {
-                print("list of horses: \(self.horses.map { $0.tid })")
+                print("list of events: \(self.events.map { $0.tid })")
                 // Patch userdata with new list of favorites
                 self.resetFavorites(bool: false, list: "personal")
-                self.patchFavoritesToUser(false, self.horses, "personal")
+                self.patchFavoritesToEvents(false, self.events, "personal")
                 // Adjust in Core Data
                 fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "personal")
             }
@@ -1358,51 +1472,36 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
-        // MARK: Add to Medicijnkast
+        // MARK: Add to Favorites
         let addToFavorites = UITableViewRowAction(style: .normal, title: "Favorite") { (action, indexPath) in
-            // Fetch Horse
-            let tid: Array<Int32> = self.horses[indexPath.row].tid.map { $0.value }
+            // Fetch Event
+            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
             
             // Adjust in Core Data
             self.fetchAndStoreAsFavorite(tid: tid, addToList: true, list: "favorite")
             // Fetch all favorites and patch to server
-            let allFavorites: [Horses] = self.fetchFavorites(entity: "CoreHorses", value: "favorite", key: "YES")
-            self.patchFavoritesToUser(true, allFavorites, "favorite") // OperationQueue
+            let allFavorites: [Events] = self.fetchFavorites(entity: "CoreEvents", value: "favorite", key: "YES")
+            self.patchFavoritesToEvents(true, allFavorites, "favorite") // OperationQueue
             let cell = tableView.cellForRow(at: indexPath)
             UIView.animate(withDuration: 1, delay: 0.0, options: [.curveEaseIn], animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.6).cgColor}, completion: {_ in UIView.animate(withDuration: 0.1, animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.0).cgColor; self.tableView.reloadRows(at: [indexPath], with: .none)}) }
             )
         }
         addToFavorites.backgroundColor = UIColor(red: 125/255, green: 0/255, blue:0/255, alpha:1)
         
-        // MARK: Add to Shoppinglist
-        let addToPersonals = UITableViewRowAction(style: .normal, title: "Personal") { (action, indexPath) in
-            // Fetch Horse
-            let tid: Array<Int32> = self.horses[indexPath.row].tid.map { $0.value }
-            self.resetFavorites(bool: false, list: "personal")
-            // Adjust in Core Data
-            self.fetchAndStoreAsFavorite(tid: tid, addToList: true, list: "personal")
-            let allFavorites: [Horses] = self.fetchFavorites(entity: "CoreHorses", value: "personal", key: "YES")
-            self.patchFavoritesToUser(true, allFavorites, "personal") // OperationQueue
-            let cell = tableView.cellForRow(at: indexPath)
-            UIView.animate(withDuration: 1, delay: 0.0, options: [.curveEaseIn], animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.6).cgColor}, completion: {_ in UIView.animate(withDuration: 0.1, animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.0).cgColor; self.tableView.reloadRows(at: [indexPath], with: .none)}) }
-            )
-        }
-        addToPersonals.backgroundColor = UIColor(red: 85/255, green: 0/255, blue:0/255, alpha:1)
-        
         let deleteFromFavorite = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
-            // Fetch Horse
-            let tid: Array<Int32> = self.horses[indexPath.row].tid.map { $0.value }
-            self.horses.remove(at: indexPath.row)
+            // Fetch Event
+            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
+            self.events.remove(at: indexPath.row)
             self.tableView.deleteRows(at: [indexPath], with: .fade)
-            self.patchFavoritesToUser(false, self.horses, "favorite")
+            self.patchFavoritesToEvents(false, self.events, "favorite")
             self.fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "favorite")
         }
         let deleteFromPersonal = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
-            // Fetch Horse
-            let tid: Array<Int32> = self.horses[indexPath.row].tid.map { $0.value }
-            self.horses.remove(at: indexPath.row)
+            // Fetch Event
+            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
+            self.events.remove(at: indexPath.row)
             self.tableView.deleteRows(at: [indexPath], with: .fade)
-            self.patchFavoritesToUser(false, self.horses, "personal")
+            self.patchFavoritesToEvents(false, self.events, "personal")
             self.fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "personal")
         }
         // Show when favorites or personal are not selected
@@ -1411,23 +1510,89 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         } else if selected[1] {
             return [deleteFromPersonal]
         } else {
-            return [addToPersonals, addToFavorites]
+            return [addToFavorites]
         }
     }
 }
 
 // MARK: UISearchResultsUpdating delegate
-extension HorsesViewController: UISearchResultsUpdating {
+extension EventsViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         let searchBar = searchController.searchBar
         let scope = searchBar.scopeButtonTitles![searchBar.selectedScopeButtonIndex]
         filterContentForSearchText(searchController.searchBar.text!, scope: scope)
+        if isFiltering() {
+            print("filteredEvents.count: \(filteredEvents.count)")
+            searchFooter.setIsFilteringToShow(filteredItemCount: filteredEvents.count, of: events.count)
+        } else {
+            searchFooter.setNotFiltering()
+        }
     }
+    
 }
 
 // MARK: UISearchBarDelegate extension
-extension HorsesViewController: UISearchBarDelegate {
+extension EventsViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, selectedScopeButtonIndexDidChange selectedScope: Int) {
         filterContentForSearchText(searchBar.text!, scope: searchBar.scopeButtonTitles![selectedScope])
+    }
+}
+
+// MARK: UIButton extension
+extension UIButton {
+    func addRightBorder(borderColor: UIColor, borderWidth: CGFloat) {
+        let border = CALayer()
+        border.backgroundColor = borderColor.cgColor
+        border.frame = CGRect(x: self.frame.size.width - borderWidth, y: 3, width: borderWidth, height: self.frame.size.height - 6)
+        self.layer.addSublayer(border)
+    }
+    
+    func addLeftBorder(borderColor: UIColor, borderWidth: CGFloat) {
+        let border = CALayer()
+        border.backgroundColor = borderColor.cgColor
+        border.frame = CGRect(x: 0, y: 3, width: borderWidth, height: self.frame.size.height - 6)
+        self.layer.addSublayer(border)
+    }
+}
+
+// MARK: UIView extension
+public extension UIView {
+    public func pin(to view: UIView) {
+        NSLayoutConstraint.activate([
+            leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            topAnchor.constraint(equalTo: view.topAnchor),
+            bottomAnchor.constraint(equalTo: view.bottomAnchor)])
+    }
+    
+    func setAnchorPoint(_ point: CGPoint) {
+        var newPoint = CGPoint(x: bounds.size.width * point.x, y: bounds.size.height * point.y)
+        var oldPoint = CGPoint(x: bounds.size.width * layer.anchorPoint.x, y: bounds.size.height * layer.anchorPoint.y)
+        newPoint = newPoint.applying(transform)
+        oldPoint = oldPoint.applying(transform)
+        
+        var position = layer.position
+        
+        position.x -= oldPoint.x
+        position.x += newPoint.x
+        
+        position.y -= oldPoint.y
+        position.y += newPoint.y
+        
+        layer.position = position
+        layer.anchorPoint = point
+    }
+}
+
+extension EventsViewController: UISplitViewControllerDelegate {
+    // MARK: - Split view
+    func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController: UIViewController, onto primaryViewController: UIViewController) -> Bool {
+        guard let secondaryAsNavController = secondaryViewController as? UINavigationController else { return false }
+        guard let topAsDetailController = secondaryAsNavController.topViewController as? EventDetailViewController else { return false }
+        if topAsDetailController.detailEvent == nil {
+            // Return true to indicate that we have handled the collapse by doing nothing
+            return true
+        }
+        return false
     }
 }
