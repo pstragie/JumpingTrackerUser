@@ -50,9 +50,9 @@ class AddNewHorseViewController: UIViewController {
         coatColorNames = fetchCoatColors()
         setupLayout()
         getCoatColors()
-        print("coat colors: \(String(describing: coatColors))")
+        //print("coat colors: \(String(describing: coatColors))")
         getStudbooks()
-        print("studbooks: \(String(describing: studbooks))")
+        //print("studbooks: \(String(describing: studbooks))")
         setupPickerViews()
         // Do any additional setup after loading the view.
     }

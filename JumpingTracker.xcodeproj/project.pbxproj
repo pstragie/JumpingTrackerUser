@@ -13,6 +13,8 @@
 		B60E66DB20C47978008901C1 /* DisciplineMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DA20C47978008901C1 /* DisciplineMode.swift */; };
 		B60E66E220C60E94008901C1 /* HorseDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */; };
 		B60E66E620C6199D008901C1 /* SearchFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66E520C6199C008901C1 /* SearchFooter.swift */; };
+		B63FE76020DA8C08006F7A57 /* OrganisatorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B63FE75F20DA8C08006F7A57 /* OrganisatorMode.swift */; };
+		B63FE76220DBD7E8006F7A57 /* FlaggingMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B63FE76120DBD7E8006F7A57 /* FlaggingMode.swift */; };
 		B6788AB120CDE32900E054BA /* AddNewHorseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6788AB020CDE32800E054BA /* AddNewHorseViewController.swift */; };
 		B6788AB320CDF66200E054BA /* CoatColorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6788AB220CDF66200E054BA /* CoatColorMode.swift */; };
 		B68DF51220D83D7A00C5F5F5 /* AddNewEventViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68DF51120D83D7A00C5F5F5 /* AddNewEventViewController.swift */; };
@@ -50,6 +52,8 @@
 		B60E66DA20C47978008901C1 /* DisciplineMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisciplineMode.swift; sourceTree = "<group>"; };
 		B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorseDetailViewController.swift; sourceTree = "<group>"; };
 		B60E66E520C6199C008901C1 /* SearchFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFooter.swift; sourceTree = "<group>"; };
+		B63FE75F20DA8C08006F7A57 /* OrganisatorMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganisatorMode.swift; sourceTree = "<group>"; };
+		B63FE76120DBD7E8006F7A57 /* FlaggingMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlaggingMode.swift; sourceTree = "<group>"; };
 		B6788AB020CDE32800E054BA /* AddNewHorseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNewHorseViewController.swift; sourceTree = "<group>"; };
 		B6788AB220CDF66200E054BA /* CoatColorMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoatColorMode.swift; sourceTree = "<group>"; };
 		B68DF51120D83D7A00C5F5F5 /* AddNewEventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNewEventViewController.swift; sourceTree = "<group>"; };
@@ -122,7 +126,9 @@
 				B68EE2FB20BF6077008C2FC5 /* StudbookMode.swift */,
 				B68EE30120C02AC1008C2FC5 /* YearMode.swift */,
 				B60E66DA20C47978008901C1 /* DisciplineMode.swift */,
+				B63FE75F20DA8C08006F7A57 /* OrganisatorMode.swift */,
 				B6AD326E20D15F3B00C29912 /* EventTypeMode.swift */,
+				B63FE76120DBD7E8006F7A57 /* FlaggingMode.swift */,
 				B6788AB220CDF66200E054BA /* CoatColorMode.swift */,
 				B6AD324A20D090C300C29912 /* GenderMode.swift */,
 			);
@@ -326,11 +332,13 @@
 				B68EE2FE20BF6165008C2FC5 /* HorsesViewController.swift in Sources */,
 				B68DF51220D83D7A00C5F5F5 /* AddNewEventViewController.swift in Sources */,
 				B60393A820D70EC40020D73B /* EventDetailViewController.swift in Sources */,
+				B63FE76020DA8C08006F7A57 /* OrganisatorMode.swift in Sources */,
 				B60E66D920C36F28008901C1 /* UserMode.swift in Sources */,
 				B68EE2DA20BD5B0B008C2FC5 /* HomeViewController.swift in Sources */,
 				B6AD326F20D15F3B00C29912 /* EventTypeMode.swift in Sources */,
 				B698860B20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift in Sources */,
 				B68EE2FA20BF5B37008C2FC5 /* HorseMode.swift in Sources */,
+				B63FE76220DBD7E8006F7A57 /* FlaggingMode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

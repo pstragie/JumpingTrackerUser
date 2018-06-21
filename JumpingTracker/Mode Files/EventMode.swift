@@ -18,10 +18,10 @@ struct Events: Codable {
     var date: [Date]
     var eventtype: [EventType]
     var level: [Level]?
-    var organisator: [Organisator]
+    var organisator: [Organisator] // Chosen organisator name of the event
     var registerwithJT: [RegisterwithJT]
     var idnumber: [IDNumber]?
-    var orguid: [OrgUID]
+    var orguid: [OrgUID] // Creator of the event
     
     enum CodingKeys: String, CodingKey {
         case title, uuid
@@ -30,7 +30,7 @@ struct Events: Codable {
         case date = "field_event_date"
         case eventtype = "field_event_type"
         case level = "field_level"
-        case organisator = "field_organisation_name"
+        case organisator = "field_organisator"
         case registerwithJT = "field_allow_registration_via_jum"
         case idnumber = "field_private_event_key"
         case orguid = "uid"

@@ -75,13 +75,16 @@ class EventsViewController: UIViewController {
     }
     // MARK: - Outlet functions
     @IBAction func allEvents(_ sender: UIButton) {
+        self.tableView.isUserInteractionEnabled = true
         allEventsButtonClicked()
     }
     @IBAction func favoriteEvents(_ sender: UIButton) {
+        self.tableView.isUserInteractionEnabled = true
         favoriteEventsButtonClicked()
     }
     
     @IBAction func personalEvents(_ sender: UIButton) {
+        self.tableView.isUserInteractionEnabled = true
         personalEventsButtonClicked()
     }
     
@@ -108,6 +111,7 @@ class EventsViewController: UIViewController {
     
     @IBAction func addButtonTapped(_ sender: UIButton) {
         noFavoritesPopup.alpha = 0
+        self.tableView.isUserInteractionEnabled = true
         allEventsButtonClicked()
     }
     @IBAction func unwindSegueCancel(_ sender: UIStoryboardSegue) {
@@ -207,7 +211,7 @@ class EventsViewController: UIViewController {
                 Thread.printCurrent()
                 print("Update or save events")
                 for items in result as [Events] {
-                    print("items: \(items)")
+                    //print("items: \(items)")
                     for t in items.tid {
                         if self.doesEntityExist(tid: Int(t.value)) {
                             // update
@@ -411,6 +415,7 @@ class EventsViewController: UIViewController {
                 self.progressView.isHidden = false
                 self.syncLabel.isHidden = false
                 self.progressView.progress = 0.0
+                self.tableView.reloadData()
             }
             
         } else {
@@ -642,21 +647,19 @@ class EventsViewController: UIViewController {
             .validate(statusCode: 200..<299)
             .validate(contentType: ["application/json"])
             .responseData { (response) in
-                
+                var events: [Events]?
                 switch(response.result) {
                 case .success:
-                    print("data: \(response.data!)")
+                    //print("data: \(response.data!)")
                     if response.result.value != nil {
-                        var events: [Events] = []
+                        
                         do {
-                            let eventData: [Events] = try [JSONDecoder().decode(Events.self, from: response.data!)]
-                            if eventData.first != nil {
-                                events = eventData
-                            }
-                            success(events)
-                            print("userdata decoded")
+                            events = try JSONDecoder().decode([Events].self, from: response.data!)
+                            
+                            success(events!)
+                            print("event data decoded")
                         } catch {
-                            print("Could not decode userdata")
+                            print("Could not decode event data")
                         }
                     }
                     break
@@ -690,63 +693,104 @@ class EventsViewController: UIViewController {
         eventKeyVerifyButton.alpha = 1.0
     }
     
+    func requestFlaggingID(_ urlString: String, headers: Dictionary<String, String>, success: @escaping (_ result: Int) -> Void, failure: @escaping (_ error: Error?) -> Void)  {
+        print("Requesting Flagging ID...")
+        
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
+            .validate(statusCode: 200..<299)
+            .validate(contentType: ["application/json"])
+            .responseData { (response) in
+                switch(response.result) {
+                case .success:
+                    print("data: \(response.data!)")
+                    if response.result.value != nil {
+                        
+                        do {
+                            let flaggings = try JSONDecoder().decode([Flaggings].self, from: response.data!)
+                            print("response: \(String(describing: flaggings.first))")
+                            let flaggingID: Int = (flaggings.first?.id!.first?.value)!
+                            success(flaggingID)
+                            print("success: flaggingID = \(flaggingID)")
+                            print("event data decoded")
+                        } catch {
+                            print("Could not decode event data")
+                        }
+                    } else {
+                        print("response: \(String(describing: response.result.value))")
+                    }
+                    break
+                case .failure(let error):
+                    print("Request to obtain favorite/personal events failed with error: \(error)")
+                    failure(error)
+                    break
+                }
+        }
+    }
+    
+    // MARK: Add flagging to event
+    func addFavoriteFlagging(tid: Int) {
+        if ConnectionCheck.isConnectedToNetwork() {
+            // Prep headers
+            let username = self.userDefault.string(forKey: "Username")
+            let password = self.getPasswordFromKeychain(username!)
+            let credentialData = "\(username!):\(password)".data(using: String.Encoding.utf8)!
+            let base64Credentials = credentialData.base64EncodedString(options: [])
+            
+            // Prep parameters for flagging
+            let flag_name: String = "add_event_to_favorites"
+            let action: String = "flag"
+            let user_uid = self.userDefault.value(forKey: "UID") as! String
+            let entity_id: String = String(tid)
+            let parameters: [String: Any] = ["flag_id": [["target_id": flag_name, "target_type": action]], "entity_type": [["value": "node"]], "entity_id": [["value": entity_id]], "uid": [["target_id": Int(user_uid)]]]
+            let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+            
+            Alamofire.request("https://jumpingtracker.com/entity/flagging?_format=json", method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
+                .responseJSON { response in
+                    switch response.result {
+                    case .success:
+                        print("Success with adding favorite flag to event: \(String(describing: response.result.value))")
+                        self.resyncTapped()
+                        break
+                    case .failure(let error):
+                        print("Request failed with error: \(error)")
+                        break
+                    }
+            }
+        } else {
+            print("No connection")
+        }
+    }
     // MARK: Patch favorites to User
-    func patchFavoritesToEvents(_ add: Bool, _ newFavorites: [Events], _ list: String) {
+    func deleteFavoriteFlagging(tid: Int) {
         // Try to post only the event ID!!!
         if ConnectionCheck.isConnectedToNetwork() {
             // Run in operationQueue
-            let patchToFavoritesCMS = BlockOperation {
-                var newPatch: [Events] = []
-                var newEventFav: [Events] = []
+            var flaggingID: Int = 0
+            let deleteFlaggingCMS = BlockOperation {
                 let username = self.userDefault.string(forKey: "Username")
                 let password = self.getPasswordFromKeychain(username!)
                 let credentialData = "\(username!):\(password)".data(using: String.Encoding.utf8)!
                 let base64Credentials = credentialData.base64EncodedString(options: [])
                 let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
                 
-                // fetch new token
-                
-                let uid = self.userDefault.value(forKey: "UID")
-                // fetch user data and collect existing favorite (and personal events)
-                
-                self.requestJSON("https://jumpingtracker.com/rest/export/json/\(list)_events/\(uid!)?_format=json", headers: headers, success: { (result) in
+                // fetch flagging id from node ID (tid)
+                print("Fetch flagging id for node ID: \(tid)")
+                self.requestFlaggingID("https://jumpingtracker.com/rest/export/json/flagging/\(tid)?_format=json", headers: headers, success: { (result) in
+                    flaggingID = result
+                    print("Flagging ID obtained: \(flaggingID)")
+                    // delete flagging
                     
-                    if list == "favorite" {
-                        if add {
-                            newEventFav = result // Get current favorites
-                        }
-                        // add new favorites to existing favorites
-                        if newFavorites.isEmpty {
-                            newEventFav = []
-                        } else {
-                            for fav in newFavorites {
-                                newEventFav.append(fav)
-                            }
-                        }
-                        for event in newEventFav {
-                            newPatch.append(event)
-                        }
                         
-                    }
-                
-                    
-
-                    
-                    
-                    
-                    // Encode array of dictionaries to JSON
-                    let encodedDataUserPatch = try? JSONEncoder().encode(newPatch)
-                    // patch user data with new favorite events to field_favorite_events
-                    // Alamofire patch
-                    let parameters = try? JSONSerialization.jsonObject(with: encodedDataUserPatch!) as? [String:Any]
+                    //let parameters = try? JSONSerialization.jsonObject(with: encodedDataUserPatch!) as? [String:Any]
                     // header with token for JWT_auth
                     //let headers = ["Authorization": "Bearer: \(self.userDefault.value(forKey: "token")!)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
                     // header with credentials for basic_auth
                     let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-                    Alamofire.request("https://jumpingtracker.com/rest/export/json/events/\(uid!)?_format=json", method: .patch, parameters: parameters!, encoding: JSONEncoding.default, headers: headers).responseJSON { response in
+                    Alamofire.request("https://jumpingtracker.com/entity/flagging/\(flaggingID)?_format=json", method: .delete,  encoding: JSONEncoding.default, headers: headers).responseJSON { response in
+                        print("delete response = \(String(describing: response.value))")
                         switch response.result {
-                        case .success(let JSON):
-                            print("Success with JSON: \(JSON)")
+                        case .success:
+                            print("Success with delete")
                             self.resyncTapped()
                             break
                         case .failure(let error):
@@ -757,9 +801,8 @@ class EventsViewController: UIViewController {
                 }, failure: { (error) in
                     print("UID failure.")
                 })
-                
             }
-            opQueue.addOperation(patchToFavoritesCMS)
+            opQueue.addOperation(deleteFlaggingCMS)
         } else {
             print("No connection!")
         }
@@ -808,10 +851,10 @@ class EventsViewController: UIViewController {
         preloadCoreData() // Fetch data from core. Filtered on button selection.
         self.tableView.reloadData()
         
-        if userDefault.value(forKey: "UID") != nil {
-            let uid = userDefault.value(forKey: "UID") as! String
+        if userDefault.bool(forKey: "loginSuccessful") { // User needs to be logged in
             let favoriteEventBlockOperation = BlockOperation {
-                self.requestPersonalEventData("https://jumpingtracker.com/rest/export/json/\(list)_events/\(uid)!)?_format=json", completion: { result in
+                // No uid needed (internal function in Flag module!)
+                self.requestPersonalEventData("https://jumpingtracker.com/rest/export/json/\(list)_events?_format=json", completion: { result in
                     
                     let eventdata: [Events] = result as [Events]
                     self.events = eventdata
@@ -986,21 +1029,14 @@ class EventsViewController: UIViewController {
         tableView.isUserInteractionEnabled = false
         noFavoritesMessageTitleLabel.text = title
         noFavoritesMessageLabel.text = message
-        let pos = noFavoritesPopup.frame
-        print("position: \(pos)")
         noFavoritesPopup.setAnchorPoint(CGPoint(x: 0.5, y: 0.1))
         noFavoritesPopup.transform = CGAffineTransform(rotationAngle: 1.8)
         UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 0.3, initialSpringVelocity: 0, options: .allowUserInteraction, animations: {
-            print("position: animation started: \(self.noFavoritesPopup.frame)")
             self.noFavoritesPopup.transform = .identity
-            print("position: after .identity: \(self.noFavoritesPopup.frame)")
         }) { (success) in
-            print("position: success: \(self.noFavoritesPopup.frame)")
             self.noFavoritesPopup.center = self.originalCenter
             self.noFavoritesPopup.setAnchorPoint(CGPoint(x: 0.5, y: 0.5))
-            print("position: prepare for next showing: \(self.noFavoritesPopup.frame)")
         }
-        print("position: end of function: \(noFavoritesPopup.frame)")
         noFavoritesPopup.alpha = 1
     }
     
@@ -1071,9 +1107,8 @@ class EventsViewController: UIViewController {
                 upcomingEvents.append(event)
             }
         }
-        splitFilteredEvents["passed"] = passedEvents
-        splitFilteredEvents["upcoming"] = upcomingEvents
-        print("splitfiltered: \(splitFilteredEvents)")
+        splitFilteredEvents["passed"] = passedEvents.sorted(by: { (dateStringToDate($0.date[0].value)) > (dateStringToDate($1.date[0].value)) })
+        splitFilteredEvents["upcoming"] = upcomingEvents.sorted(by: { (dateStringToDate($0.date[0].value)) < (dateStringToDate($1.date[0].value)) })
         tableView.reloadData()
     }
     
@@ -1117,8 +1152,8 @@ class EventsViewController: UIViewController {
                 upcomingEvents.append(event)
             }
         }
-        splitEvents["passed"] = passedEvents
-        splitEvents["upcoming"] = upcomingEvents
+        splitEvents["passed"] = passedEvents.sorted(by: { (dateStringToDate($0.date[0].value)) > (dateStringToDate($1.date[0].value)) })
+        splitEvents["upcoming"] = upcomingEvents.sorted(by: { (dateStringToDate($0.date[0].value)) < (dateStringToDate($1.date[0].value)) })
         
     }
     
@@ -1307,11 +1342,29 @@ class EventsViewController: UIViewController {
                 controller.detailEvent = event
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true
+                if #available(iOS 11.0, *) {
+                    controller.navigationController?.navigationBar.prefersLargeTitles = false
+                } else {
+                    // Fallback on earlier versions
+                }
                 controller.navigationController?.title = event.title.first?.value
             }
         }
     }
     
+    func getUUIDfromUID(uid: Int) -> String {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreCurrentUser")
+        fetchRequest.predicate = NSPredicate(format: "uid == %d", Int32(uid))
+        var uuid: String = ""
+        do {
+            let result = try self.appDelegate.getContext().fetch(fetchRequest) as! [CurrentUser]
+            uuid = (result.first?.uuid)!
+            
+        } catch {
+            print("Could not fetch uuid")
+        }
+        return uuid
+    }
     func getName(_ entity: String, _ tid: Int, _ key: String) -> String {
         var result: NSManagedObject?
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity)
@@ -1433,6 +1486,12 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         cell.event.text = event.title.first?.value
+        let organisator: String = getName("CoreOrganisators", (event.organisator.first?.id)!, "name")
+        
+        cell.organisation.text = organisator
+        cell.date.text = sanitizeDateFromJson((event.date.first?.value)!)
+        cell.locality.text = event.address.first?.locality
+        cell.country.text = event.address.first?.countryCode
         return cell
     }
     
@@ -1446,42 +1505,22 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            // Quickly remove from tableview
-            print("list of events before deleting: \(self.events.map { $0.tid })")
-            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
-            self.events.remove(at: indexPath.row)
-            tableView.reloadData()
             
-            
-            if selected[0] {
-                print("list of events: \(self.events.map { $0.tid })")
-                // Patch userdata with new list of favorites
-                self.resetFavorites(bool: false, list: "favorite") // Main queue
-                self.patchFavoritesToEvents(false, self.events, "favorite") // OperationQueue
-                // Adjust in Core Data
-                fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "favorite")
-            } else if selected[1] {
-                print("list of events: \(self.events.map { $0.tid })")
-                // Patch userdata with new list of favorites
-                self.resetFavorites(bool: false, list: "personal")
-                self.patchFavoritesToEvents(false, self.events, "personal")
-                // Adjust in Core Data
-                fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "personal")
-            }
         }
+        
     }
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         // MARK: Add to Favorites
         let addToFavorites = UITableViewRowAction(style: .normal, title: "Favorite") { (action, indexPath) in
             // Fetch Event
-            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
+            let tid: Int32 = (self.events[indexPath.row].tid.first?.value)!
             
             // Adjust in Core Data
-            self.fetchAndStoreAsFavorite(tid: tid, addToList: true, list: "favorite")
+            self.fetchAndStoreAsFavorite(tid: [tid], addToList: true, list: "favorite")
             // Fetch all favorites and patch to server
-            let allFavorites: [Events] = self.fetchFavorites(entity: "CoreEvents", value: "favorite", key: "YES")
-            self.patchFavoritesToEvents(true, allFavorites, "favorite") // OperationQueue
+            //let allFavorites: [Events] = self.fetchFavorites(entity: "CoreEvents", value: "favorite", key: "YES")
+            self.addFavoriteFlagging(tid: Int(tid)) // OperationQueue
             let cell = tableView.cellForRow(at: indexPath)
             UIView.animate(withDuration: 1, delay: 0.0, options: [.curveEaseIn], animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.6).cgColor}, completion: {_ in UIView.animate(withDuration: 0.1, animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.0).cgColor; self.tableView.reloadRows(at: [indexPath], with: .none)}) }
             )
@@ -1490,19 +1529,67 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
         
         let deleteFromFavorite = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
             // Fetch Event
-            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
-            self.events.remove(at: indexPath.row)
-            self.tableView.deleteRows(at: [indexPath], with: .fade)
-            self.patchFavoritesToEvents(false, self.events, "favorite")
-            self.fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "favorite")
+            print("deleteFromFavorite")
+            //self.tableView.deleteRows(at: [indexPath], with: .fade)
+            switch (indexPath.section) {
+            case 0:
+                // Quickly remove from tableview
+                //print("list of events before deleting: \(self.events.map { $0.tid })")
+                var list = self.isFiltering() ? self.splitFilteredEvents["upcoming"] : self.splitEvents["upcoming"]
+                if (list?.isEmpty)! {
+                    list = self.isFiltering() ? self.splitFilteredEvents["passed"] : self.splitEvents["passed"]
+                }
+                let tid: Int32 = (list![indexPath.row].tid.first?.value)!
+                /*
+                let rowToDelete: Events = list![indexPath.row]
+                let indexposition: Int = self.events.index(where: { (event) -> Bool in
+                    if event.tid == rowToDelete.tid {
+                        return true
+                    }
+                    return false
+                })!
+                self.events.remove(at: indexposition)
+                */
+                list!.remove(at: indexPath.row)
+                
+                self.deleteFavoriteFlagging(tid: Int(tid))
+                self.fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "favorite")
+            default:
+                // Quickly remove from tableview
+                //print("list of events before deleting: \(self.events.map { $0.tid })")
+                var list = self.isFiltering() ? self.splitFilteredEvents["passed"] : self.splitEvents["passed"]
+                let tid: Int32 = (list![indexPath.row].tid.first?.value)!
+                list!.remove(at: indexPath.row)
+                self.deleteFavoriteFlagging(tid: Int(tid))
+                self.fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "favorite")
+            }
         }
+        
         let deleteFromPersonal = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
             // Fetch Event
-            let tid: Array<Int32> = self.events[indexPath.row].tid.map { $0.value }
-            self.events.remove(at: indexPath.row)
-            self.tableView.deleteRows(at: [indexPath], with: .fade)
-            self.patchFavoritesToEvents(false, self.events, "personal")
-            self.fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "personal")
+            switch (indexPath.section) {
+            case 0:
+                // Quickly remove from tableview
+                //print("list of events before deleting: \(self.events.map { $0.tid })")
+                var list = self.isFiltering() ? self.splitFilteredEvents["upcoming"] : self.splitEvents["upcoming"]
+                if (list?.isEmpty)! {
+                    list = self.isFiltering() ? self.splitFilteredEvents["passed"] : self.splitEvents["passed"]
+                }
+                let tid: Int32 = list![indexPath.row].tid.first!.value
+                list!.remove(at: indexPath.row)
+                self.tableView.deleteRows(at: [indexPath], with: .fade)
+                self.deleteFavoriteFlagging(tid: Int(tid))
+                self.fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "personal")
+            default:
+                // Quickly remove from tableview
+                //print("list of events before deleting: \(self.events.map { $0.tid })")
+                var list = self.isFiltering() ? self.splitFilteredEvents["passed"] : self.splitEvents["passed"]
+                let tid: Int32 = list![indexPath.row].tid.first!.value
+                list!.remove(at: indexPath.row)
+                self.tableView.deleteRows(at: [indexPath], with: .fade)
+                self.deleteFavoriteFlagging(tid: Int(tid))
+                self.fetchAndStoreAsFavorite(tid: [tid], addToList: false, list: "personal")
+            }
         }
         // Show when favorites or personal are not selected
         if selected[0] {
@@ -1522,7 +1609,6 @@ extension EventsViewController: UISearchResultsUpdating {
         let scope = searchBar.scopeButtonTitles![searchBar.selectedScopeButtonIndex]
         filterContentForSearchText(searchController.searchBar.text!, scope: scope)
         if isFiltering() {
-            print("filteredEvents.count: \(filteredEvents.count)")
             searchFooter.setIsFilteringToShow(filteredItemCount: filteredEvents.count, of: events.count)
         } else {
             searchFooter.setNotFiltering()

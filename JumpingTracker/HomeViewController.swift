@@ -263,6 +263,22 @@ class HomeViewController: UIViewController {
                 }
             })
             
+            self.requestOrganisators(header: headers, completion: { (result) in
+                // Store to core data
+                self.appDelegate.persistentContainer.performBackgroundTask { (context) in
+                    Thread.printCurrent()
+                    for items in result as [Organisators] {
+                        let organisator: Organisator = NSEntityDescription.insertNewObject(forEntityName: "CoreOrganisators", into: context) as! Organisator
+                        organisator.allAtributes = items
+                    }
+                    do {
+                        try context.save()
+                    } catch {
+                        print("Could not save studbooks")
+                        
+                    }
+                }
+            })
         }
         opQueue.addOperation(taxRequestOperation)
     }
@@ -406,6 +422,34 @@ class HomeViewController: UIViewController {
                             print("disciplines decoded")
                         } catch {
                             print("Could not decode disciplines")
+                        }
+                    }
+                    break
+                case .failure(let error):
+                    print("Request to authenticate failed with error: \(error)")
+                    break
+                }
+            })
+    }
+    
+    func requestOrganisators(header: Dictionary<String, String>, completion: @escaping ([Organisators]) -> ()) {
+        let urlString = "https://jumpingtracker.com/rest/export/json/organisations?_format=json"
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
+            .validate(statusCode: 200..<300)
+            .validate(contentType: ["application/json"])
+            .responseData(completionHandler: { (response) in
+                
+                switch(response.result) {
+                case .success:
+                    if response.result.value != nil {
+                        print("Response: \(response)")
+                        do {
+                            let organisators: [Organisators] = try JSONDecoder().decode([Organisators].self, from: response.data!)
+                            
+                            completion(organisators)
+                            print("organisators decoded")
+                        } catch {
+                            print("Could not decode organisators")
                         }
                     }
                     break
@@ -572,7 +616,7 @@ class HomeViewController: UIViewController {
                     let token = swiftyJSON["token"].stringValue
                     self.userDefault.set(token, forKey: "JWT_token")
                     let decoded = JSON(self.decode(jwtToken: token))
-                    print("decoded: \(decoded)")
+                    //print("decoded: \(decoded)")
                     let uid = decoded["drupal"]["uid"].stringValue
                     print("UID = \(uid)")
                     self.userDefault.set(uid, forKey: "UID")
@@ -635,12 +679,28 @@ class HomeViewController: UIViewController {
         Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
             .validate(statusCode: 200..<299)
             .validate(contentType: ["application/json"])
-            
+            .responseJSON(completionHandler: { (response) in
+                if response.result.value == nil {
+                    print("No response!")
+                }
+                print("response result = \(response.result)")
+                switch(response.result) {
+                case .success(let value):
+                    let swiftyJSON = JSON(value)
+                    let firstname = swiftyJSON["field_firstname"][0]["value"].stringValue
+                    let surname = swiftyJSON["field_surname"][0]["value"].stringValue
+                    
+                    self.userDefault.set(firstname, forKey: "firstname")
+                    self.userDefault.set(surname, forKey: "surname")
+                case .failure(let error):
+                    print("failed fetching firstname: \(error)")
+                }
+            })
             .responseData(completionHandler: { (response) in
                 
                 switch(response.result) {
                 case .success:
-                    print("data: \(response.data!)")
+                    //print("data: \(response.data!)")
                     if response.result.value != nil {
                         
                         do {
@@ -830,7 +890,6 @@ class HomeViewController: UIViewController {
         print("loginSuccess: \(loginSuccess)")
         if userDefault.bool(forKey: "loginSuccessful") {
             loginView.isHidden = true
-            fetchFirstname()
             print("user previously logged in!")
             if userDefault.string(forKey: "firstname") != nil && userDefault.string(forKey: "firstname") != "" {
                 let username = userDefault.string(forKey: "firstname")!

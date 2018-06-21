@@ -204,7 +204,7 @@ class HorsesViewController: UIViewController {
                 Thread.printCurrent()
                 print("Update or save horses")
                 for items in result as [Horses] {
-                    print("items: \(items)")
+                    //print("items: \(items)")
                     for t in items.tid {
                         if self.doesEntityExist(tid: Int(t.value)) {
                             // update
@@ -520,10 +520,8 @@ class HorsesViewController: UIViewController {
         loginButton.tintColor = UIColor.white
         
         noFavoritesPopup.alpha = 0
-        print("position: not determined: \(noFavoritesPopup.frame)")
         originalCenter = noFavoritesPopup.center
         noFavoritesPopup.center = self.originalCenter
-        print("position: adjusted: \(noFavoritesPopup.frame)")
         noFavoritesPopup.layer.cornerRadius = 15
         noFavoritesPopup.layer.masksToBounds = true
         noFavoritesPopupView.layer.borderWidth = 1.5
@@ -533,7 +531,6 @@ class HorsesViewController: UIViewController {
         noFavoritesPopupView.backgroundColor = UIColor.FlatColor.Gray.WhiteSmoke
         noFavoritesMessageLabel.adjustsFontSizeToFitWidth = true
         noFavoritesMessageTitleLabel.adjustsFontSizeToFitWidth = true
-        print("position end of setup: \(noFavoritesPopup.frame)")
         //noFavoritesPopupView.setGradientBackground()
         addButton.layer.borderColor = UIColor.FlatColor.Gray.IronGray.cgColor
         addButton.layer.borderWidth = 1.5
@@ -541,7 +538,6 @@ class HorsesViewController: UIViewController {
         addButton.layer.cornerRadius = 5
         addButton.layer.masksToBounds = true
         addButton.tintColor = UIColor.white
-        print("position button ready: \(noFavoritesPopup.frame)")
     }
     // MARK: - request data
     
@@ -621,7 +617,7 @@ class HorsesViewController: UIViewController {
                 
                 switch(response.result) {
                 case .success:
-                    print("data: \(response.data!)")
+                    //print("data: \(response.data!)")
                     if response.result.value != nil {
                     
                         do {
@@ -710,8 +706,8 @@ class HorsesViewController: UIViewController {
                         let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
                         Alamofire.request("https://jumpingtracker.com/user/\(uid!)?_format=json", method: .patch, parameters: parameters!, encoding: JSONEncoding.default, headers: headers).responseJSON { response in
                             switch response.result {
-                            case .success(let JSON):
-                                print("Success with JSON: \(JSON)")
+                            case .success:
+                                print("Success with JSON")
                                 self.resyncTapped()
                                 break
                             case .failure(let error):
@@ -951,21 +947,14 @@ class HorsesViewController: UIViewController {
         tableView.isUserInteractionEnabled = false
         noFavoritesMessageTitleLabel.text = title
         noFavoritesMessageLabel.text = message
-        let pos = noFavoritesPopup.frame
-        print("position: \(pos)")
         noFavoritesPopup.setAnchorPoint(CGPoint(x: 0.5, y: 0.1))
         noFavoritesPopup.transform = CGAffineTransform(rotationAngle: 1.8)
         UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 0.3, initialSpringVelocity: 0, options: .allowUserInteraction, animations: {
-            print("position: animation started: \(self.noFavoritesPopup.frame)")
             self.noFavoritesPopup.transform = .identity
-            print("position: after .identity: \(self.noFavoritesPopup.frame)")
         }) { (success) in
-            print("position: success: \(self.noFavoritesPopup.frame)")
             self.noFavoritesPopup.center = self.originalCenter
             self.noFavoritesPopup.setAnchorPoint(CGPoint(x: 0.5, y: 0.5))
-            print("position: prepare for next showing: \(self.noFavoritesPopup.frame)")
         }
-        print("position: end of function: \(noFavoritesPopup.frame)")
         noFavoritesPopup.alpha = 1
     }
     
@@ -1238,6 +1227,11 @@ class HorsesViewController: UIViewController {
                 let controller = (segue.destination as! UINavigationController).topViewController as! HorseDetailViewController
                 controller.detailHorse = horse
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
+                if #available(iOS 11.0, *) {
+                    controller.navigationController?.navigationBar.prefersLargeTitles = false
+                } else {
+                    // Fallback on earlier versions
+                }
                 controller.navigationItem.leftItemsSupplementBackButton = true
                 controller.navigationController?.title = horse.name.first?.value
             }
@@ -1333,21 +1327,21 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Quickly remove from tableview
-            print("list of horses before deleting: \(self.horses.map { $0.tid })")
+            //print("list of horses before deleting: \(self.horses.map { $0.tid })")
             let tid: Array<Int32> = self.horses[indexPath.row].tid.map { $0.value }
             self.horses.remove(at: indexPath.row)
             tableView.reloadData()
             
             
             if selected[0] {
-                print("list of horses: \(self.horses.map { $0.tid })")
+                //print("list of horses: \(self.horses.map { $0.tid })")
                 // Patch userdata with new list of favorites
                 self.resetFavorites(bool: false, list: "favorite") // Main queue
                 self.patchFavoritesToUser(false, self.horses, "favorite") // OperationQueue
                 // Adjust in Core Data
                 fetchAndStoreAsFavorite(tid: tid, addToList: false, list: "favorite")
             } else if selected[1] {
-                print("list of horses: \(self.horses.map { $0.tid })")
+                //print("list of horses: \(self.horses.map { $0.tid })")
                 // Patch userdata with new list of favorites
                 self.resetFavorites(bool: false, list: "personal")
                 self.patchFavoritesToUser(false, self.horses, "personal")

@@ -37,8 +37,8 @@ class AddNewEventViewController: UIViewController {
             } else {
                 // Fallback on earlier versions
             }
-            
-            print("Event name: \(detailEvent)")
+            navigationController?.navigationItem.title = detailEvent.title[0].value
+            //print("Event name: \(detailEvent)")
         }
     }
     

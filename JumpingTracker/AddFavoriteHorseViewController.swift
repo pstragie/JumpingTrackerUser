@@ -68,7 +68,8 @@ class AddFavoriteHorseViewController: UIViewController {
     }
 
     override func viewWillLayoutSubviews() {
-        print("viewWillLayoutSubviews")
+        super.viewWillLayoutSubviews()
+        //print("viewWillLayoutSubviews")
         if filteredHorses.count == 0 {
             for button in buttons {
                 button.isEnabled = false
@@ -115,7 +116,6 @@ class AddFavoriteHorseViewController: UIViewController {
     }
     // MARK: search is filtering?
     func isFiltering() -> Bool {
-        print("filtering: \(!searchBarIsEmpty())")
         return !searchBarIsEmpty()
     }
     // MARK: - Fetch request from Core Data

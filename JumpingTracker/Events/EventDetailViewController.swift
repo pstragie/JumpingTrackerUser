@@ -113,7 +113,7 @@ class EventDetailViewController: UIViewController {
             }
             navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
             
-            print("Event name: \(detailEvent)")
+            //print("Event name: \(detailEvent)")
         }
     }
     

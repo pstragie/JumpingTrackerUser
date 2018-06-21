@@ -71,7 +71,7 @@
         <attribute name="tid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
-    <entity name="CoreOrganisators" representedClassName="CoreOrganisators" syncable="YES" codeGenerationType="class">
+    <entity name="CoreOrganisators" representedClassName="Organisator" syncable="YES" codeGenerationType="class">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="tid" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
