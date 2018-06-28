@@ -156,7 +156,6 @@ class HomeViewController: UIViewController {
     func getTaxonomies() {
         let taxRequestOperation = BlockOperation {
             print("request taxonomies...")
-            Thread.printCurrent()
             let username = "swift_username_request_data"
             let password = "JTIsabelle29?"
             let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
@@ -167,7 +166,6 @@ class HomeViewController: UIViewController {
             self.requestDisciplines(header: headers, completion: { (result) in
                 print("Casting disciplines...")
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                    Thread.printCurrent()
                     for items in result as [Disciplines] {
                         let disciplines: Discipline = NSEntityDescription.insertNewObject(forEntityName: "CoreDisciplines", into: context) as! Discipline
                         disciplines.allAtributes = items
@@ -185,7 +183,6 @@ class HomeViewController: UIViewController {
             self.requestEventTypes(header: headers, completion: { (result) in
                 print("Casting event types...")
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                    Thread.printCurrent()
                     for items in result as [EventTypes] {
                         let eventtypes: EventType = NSEntityDescription.insertNewObject(forEntityName: "CoreEventTypes", into: context) as! EventType
                         eventtypes.allAtributes = items
@@ -200,7 +197,6 @@ class HomeViewController: UIViewController {
             })
             self.requestCoatColors(header: headers, completion: { (result) in
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                Thread.printCurrent()
                 for items in result as [CoatColors] {
                     let coatcolors: CoatColor = NSEntityDescription.insertNewObject(forEntityName: "CoreCoatColors", into: context) as! CoatColor
                     coatcolors.allAtributes = items
@@ -217,7 +213,6 @@ class HomeViewController: UIViewController {
             
             self.requestGenders(header: headers, completion: { (result) in
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                    Thread.printCurrent()
                     for items in result as [Genders] {
                         let genders: Gender = NSEntityDescription.insertNewObject(forEntityName: "CoreGender", into: context) as! Gender
                         genders.allAtributes = items
@@ -232,7 +227,6 @@ class HomeViewController: UIViewController {
             
             self.requestYears(header: headers, completion: { (result) in
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                    Thread.printCurrent()
                     for items in result as [Years] {
                         let years: Year = NSEntityDescription.insertNewObject(forEntityName: "CoreJaartallen", into: context) as! Year
                         years.allAtributes = items
@@ -249,7 +243,6 @@ class HomeViewController: UIViewController {
             self.requestStudbooks(header: headers, completion: { (result) in
                 // Store to core data
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                    Thread.printCurrent()
                     for items in result as [Studbooks] {
                         let studbook: Studbook = NSEntityDescription.insertNewObject(forEntityName: "CoreStudbooks", into: context) as! Studbook
                         studbook.allAtributes = items
@@ -266,7 +259,6 @@ class HomeViewController: UIViewController {
             self.requestOrganisators(header: headers, completion: { (result) in
                 // Store to core data
                 self.appDelegate.persistentContainer.performBackgroundTask { (context) in
-                    Thread.printCurrent()
                     for items in result as [Organisators] {
                         let organisator: Organisator = NSEntityDescription.insertNewObject(forEntityName: "CoreOrganisators", into: context) as! Organisator
                         organisator.allAtributes = items
@@ -689,7 +681,6 @@ class HomeViewController: UIViewController {
                     let swiftyJSON = JSON(value)
                     let firstname = swiftyJSON["field_firstname"][0]["value"].stringValue
                     let surname = swiftyJSON["field_surname"][0]["value"].stringValue
-                    
                     self.userDefault.set(firstname, forKey: "firstname")
                     self.userDefault.set(surname, forKey: "surname")
                 case .failure(let error):

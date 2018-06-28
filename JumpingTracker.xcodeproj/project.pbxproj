@@ -42,6 +42,7 @@
 		B6AD324B20D090C300C29912 /* GenderMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6AD324A20D090C300C29912 /* GenderMode.swift */; };
 		B6AD326F20D15F3B00C29912 /* EventTypeMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6AD326E20D15F3B00C29912 /* EventTypeMode.swift */; };
 		B6AD327220D1612300C29912 /* dataModel in Resources */ = {isa = PBXBuildFile; fileRef = B6AD327120D1612300C29912 /* dataModel */; };
+		B6EA460720DECE860094E389 /* LogoMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6EA460620DECE860094E389 /* LogoMode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +84,7 @@
 		B6AD324A20D090C300C29912 /* GenderMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenderMode.swift; sourceTree = "<group>"; };
 		B6AD326E20D15F3B00C29912 /* EventTypeMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTypeMode.swift; sourceTree = "<group>"; };
 		B6AD327120D1612300C29912 /* dataModel */ = {isa = PBXFileReference; lastKnownFileType = folder; name = dataModel; path = "../../../../../../../../../Library/Developer/Xcode/DerivedData/JumpingTracker-cfsigggehjnlhifeulhymjsfwgcq/Build/Intermediates.noindex/JumpingTracker.build/Debug-iphonesimulator/JumpingTracker.build/DerivedSources/CoreDataGenerated/dataModel"; sourceTree = "<group>"; };
+		B6EA460620DECE860094E389 /* LogoMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoMode.swift; sourceTree = "<group>"; };
 		ECA3DB9B5F8F20F4BD1CAB00 /* Pods-JumpingTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JumpingTracker.release.xcconfig"; path = "Pods/Target Support Files/Pods-JumpingTracker/Pods-JumpingTracker.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -122,6 +124,7 @@
 				B6AD327020D160E800C29912 /* CoreProperties */,
 				B68EE2F320BD6E7F008C2FC5 /* EventMode.swift */,
 				B60E66D820C36F27008901C1 /* UserMode.swift */,
+				B6EA460620DECE860094E389 /* LogoMode.swift */,
 				B68EE2F920BF5B37008C2FC5 /* HorseMode.swift */,
 				B68EE2FB20BF6077008C2FC5 /* StudbookMode.swift */,
 				B68EE30120C02AC1008C2FC5 /* YearMode.swift */,
@@ -321,6 +324,7 @@
 				B68EE30A20C34C6E008C2FC5 /* KeychainPasswordItem.swift in Sources */,
 				B68EE2EE20BD5EA6008C2FC5 /* UIColor+FlatColors.swift in Sources */,
 				B698860E20CB6CA6002AFFC1 /* dataModel.xcdatamodeld in Sources */,
+				B6EA460720DECE860094E389 /* LogoMode.swift in Sources */,
 				B68EE30020BF64AB008C2FC5 /* HorseTableCells.swift in Sources */,
 				B60E66DB20C47978008901C1 /* DisciplineMode.swift in Sources */,
 				B6788AB120CDE32900E054BA /* AddNewHorseViewController.swift in Sources */,

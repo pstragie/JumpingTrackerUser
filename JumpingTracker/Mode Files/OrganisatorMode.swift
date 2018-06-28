@@ -21,7 +21,7 @@ struct Organisators: Codable {
     }
     
     struct NumberID: Codable {
-        var value: Int32
+        var value: Int
     }
     
     struct UUID: Codable {
@@ -37,14 +37,14 @@ extension Organisator {
     
     var allAtributes: Organisators {
         get {
-            let tid = Organisators.NumberID(value: self.tid)
+            let tid = Organisators.NumberID(value: Int(self.tid))
             let uuid = Organisators.UUID(value: self.uuid!)
             let name = Organisators.Name(value: self.name!)
             
             return Organisators(tid: [tid], uuid: [uuid], name: [name])
         }
         set {
-            self.tid = (newValue.tid.first?.value)!
+            self.tid = Int32((newValue.tid.first?.value)!)
             self.uuid = (newValue.uuid.first?.value)!
             self.name = (newValue.name.first?.value)!
         }

@@ -13,7 +13,7 @@ import UIKit
 let context = (UIApplication.shared.delegate as? AppDelegate)?.persistentContainer.viewContext
 
 struct Horses: Codable {
-    var tid: [ID]
+    var tid: [TID]
     var uuid: [UUID]
     var name: [Name]
     var studbook: [Studbook]?
@@ -39,7 +39,7 @@ struct Horses: Codable {
             return (self.studreg ?? [])
         }
     }
-    init(tid: [Horses.ID], uuid: [Horses.UUID], name: [Horses.Name], studbook: [Horses.Studbook]? = nil, owner: [Horses.Owner]? = nil, birthday: [Horses.Birthday]? = nil, discipline: [Horses.Discipline]? = nil, gender: [Horses.Gender]? = nil, father: [Horses.Father]? = nil, mother: [Horses.Mother]? = nil, deceased: [Horses.Deceased], coatcolor: [Horses.Coatcolor]? = nil, studreg: [Horses.Studreg]? = nil, height: [Horses.Height]? = nil, idnumber: [Horses.IDNumber]) {
+    init(tid: [Horses.TID], uuid: [Horses.UUID], name: [Horses.Name], studbook: [Horses.Studbook]? = nil, owner: [Horses.Owner]? = nil, birthday: [Horses.Birthday]? = nil, discipline: [Horses.Discipline]? = nil, gender: [Horses.Gender]? = nil, father: [Horses.Father]? = nil, mother: [Horses.Mother]? = nil, deceased: [Horses.Deceased], coatcolor: [Horses.Coatcolor]? = nil, studreg: [Horses.Studreg]? = nil, height: [Horses.Height]? = nil, idnumber: [Horses.IDNumber]) {
         self.tid = tid
         self.uuid = uuid
         self.name = name
@@ -73,8 +73,8 @@ struct Horses: Codable {
         case height = "field_horse_height"
     }
     
-    struct ID: Codable, Equatable {
-        var value: Int32
+    struct TID: Codable, Equatable {
+        var value: Int
     }
     
     struct UUID: Codable {
@@ -223,7 +223,7 @@ extension Horse {
     
     var allAtributes: Horses {
         get {
-            let tid = Horses.ID(value: self.tid)
+            let tid = Horses.TID(value: Int(self.tid))
             let uuid = Horses.UUID(value: self.uuid!)
             let name = Horses.Name(value: self.name!)
             let idnumber = Horses.IDNumber(value: self.identification!)

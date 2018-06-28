@@ -8,11 +8,14 @@
 
 import UIKit
 import CoreData
+import Alamofire
+import SwiftyJSON
 
 class EventDetailViewController: UIViewController {
     
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     let userDefault = UserDefaults.standard
+    let opQueue: OperationQueue = OperationQueue()
     var eventEditing: Bool = false
     var detailEvent: Events? {
         didSet {
@@ -41,6 +44,7 @@ class EventDetailViewController: UIViewController {
     @IBOutlet weak var classLabel: UILabel!
     @IBOutlet weak var className1: UILabel!
     @IBOutlet weak var eventImage: UIImageView!
+    @IBOutlet weak var bodyLabel: UILabel!
     
     
     
@@ -100,7 +104,9 @@ class EventDetailViewController: UIViewController {
     func configureView() {
         if let detailEvent = detailEvent {
             if #available(iOS 11.0, *) {
-                navigationItem.largeTitleDisplayMode = .automatic
+                //navigationItem.largeTitleDisplayMode = .automatic
+                navigationController?.navigationBar.prefersLargeTitles = false
+                self.navigationItem.largeTitleDisplayMode = .never
             } else {
                 // Fallback on earlier versions
             }
@@ -112,7 +118,9 @@ class EventDetailViewController: UIViewController {
                 rightBarButtonItems = []
             }
             navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
-            
+            let logo = UIImage(named: "jumping_horse")
+            let imageView = UIImageView(image: logo!)
+            self.navigationItem.titleView = imageView
             //print("Event name: \(detailEvent)")
         }
     }
@@ -177,9 +185,94 @@ class EventDetailViewController: UIViewController {
     
     func setupLayout() {
         eventName.text = detailEvent?.title.first?.value
+        organisator.text = detailEvent?.organisator?.first?.value
         if detailEvent?.eventtype.first != nil {
             eventType.text = getName("CoreEventTypes", Int((detailEvent?.eventtype.first?.id)!), "name")
         }
+        if detailEvent?.address?.first?.address_line1 != nil {
+            streetName.text = detailEvent?.address?.first?.address_line1
+        }
+        if detailEvent?.address?.first?.locality != nil {
+            localisation.text = detailEvent?.address?.first?.locality
+        }
+        if detailEvent?.address?.first?.postal_code != nil {
+            postcode.text = detailEvent?.address?.first?.postal_code
+        }
+        if detailEvent?.address?.first?.country_code != nil {
+            country.text = detailEvent?.address?.first?.country_code
+        }
+        if detailEvent?.body?.first != nil {
+            bodyLabel.attributedText = detailEvent?.body?.first?.processed?.htmlToAttributedString
+        }
+        
+        // Get logo from event or event creator (uid)
+        if detailEvent?.logo?.first?.target_id != nil {
+            let eventuid = detailEvent?.logo?.first?.target_id
+            print("logo user id = \(eventuid!)")
+            getLogoUrl(uid: eventuid!)
+            // Request and load logo in the background
+        }
+        
+        // url for poster comes with events REST
+        if detailEvent?.poster?.first?.url != nil {
+            self.eventImage.downloadedFrom(link: (detailEvent?.poster?.first?.url)!)
+        }
+        
+        
+        
+    }
+    
+    
+    func getLogoUrl(uid: Int) {
+        let logoRequestOperation = BlockOperation {
+            print("request logo url...(\(uid))")
+            Thread.printCurrent()
+            let username = self.userDefault.value(forKey: "Username") as! String
+            let password = self.getPasswordFromKeychain(username)
+            let credentialData = "\(username):\(password)".data(using: String.Encoding.utf8)!
+            let base64Credentials = credentialData.base64EncodedString(options: [])
+            let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+            self.requestLogoURL(uid: uid, header: headers, completion: { (result) in
+                DispatchQueue.main.async() {
+                    print("logo result: \(result)")
+                    self.eventLogo.downloadedFrom(link: result)
+                }
+            })
+        }
+        opQueue.addOperation(logoRequestOperation)
+    }
+    
+    // MARK: get password from keychain
+    func getPasswordFromKeychain(_ account: String) -> String {
+        do {
+            let passwordItem = KeychainPasswordItem(service: KeychainConfiguration.serviceName,
+                                                    account: account,
+                                                    accessGroup: KeychainConfiguration.accessGroup)
+            let keychainPassword = try passwordItem.readPassword()
+            return keychainPassword
+        } catch {
+            //fatalError("Error reading password from keychain - \(error)")
+            print("Error reading password from keychain - \(error)")
+            return "blablabla"
+        }
+    }
+    
+    func requestLogoURL(uid: Int, header: Dictionary<String, String>, completion: @escaping (String) -> ()) {
+        print("logo request URL uid: \(uid)")
+        let urlString = "https://jumpingtracker.com/rest/export/json/logos/\(uid)?_format=json"
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: header)
+            .validate(statusCode: 200..<300)
+            .validate(contentType: ["application/json"])
+            .responseJSON(completionHandler: { (response) in
+                switch(response.result) {
+                case .success(let value):
+                    let swiftyJSON = JSON(value)
+                    let logoURL = swiftyJSON[0]["field_organisation_logo"][0]["url"].stringValue
+                    completion(logoURL)
+                case .failure(let error):
+                    print("logo failure with error: \(error)")
+                }
+            })
         
     }
     
@@ -251,5 +344,42 @@ extension EventDetailViewController {
         }
         
         navigationController?.navigationBar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor: UIColor.FlatColor.Blue.BlueWhale, NSAttributedStringKey.font: UIFont(name: "Papyrus", size: fontSize) ?? UIFont.boldSystemFont(ofSize: fontSize)]
+    }
+}
+
+extension String {
+    var htmlToAttributedString: NSAttributedString? {
+        guard let data = data(using: .utf8) else { return NSAttributedString() }
+        do {
+            return try NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.html, .characterEncoding:String.Encoding.utf8.rawValue], documentAttributes: nil)
+        } catch {
+            return NSAttributedString()
+        }
+    }
+    var htmlToString: String {
+        return htmlToAttributedString?.string ?? ""
+    }
+}
+
+extension UIImageView {
+    func downloadedFrom(url: URL, contentMode mode: UIViewContentMode = .scaleAspectFit) {
+        contentMode = mode
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard
+            let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,
+            let mimeType = response?.mimeType, mimeType.hasPrefix("image"),
+            let data = data, error == nil,
+                let image = UIImage(data: data)
+                else { return }
+            DispatchQueue.main.async() {
+                print("logo async image load")
+                self.image = image
+            }
+        }.resume()
+    }
+    func downloadedFrom(link: String, contentMode mode: UIViewContentMode = .scaleAspectFit) {
+        print("logo downloading image: \(link)")
+        guard let url = URL(string: link) else { return }
+        downloadedFrom(url: url, contentMode: mode)
     }
 }

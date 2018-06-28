@@ -43,7 +43,9 @@ class AddFavoriteHorseViewController: UIViewController {
         let exists: Bool = personal.contains { (horse) -> Bool in
             horse.name == selectedHorse!.name
         }
-        if !exists {
+        
+        // Show horseKeyPopup and ask for identification number
+        if !exists {  // TODO: if identification is correct and !exists -> Add to table
             personal.append(selectedHorse!)
             tableView.reloadData()
         }

@@ -77,4 +77,16 @@ extension SearchFooter {
             showFooter()
         }
     }
+    
+    public func setIsFilteringEventsToShow(filteredItemCountUpcoming: Int, of totalItemCountUpcoming: Int, filteredItemCountPassed: Int, of totalItemCountPassed: Int) {
+        if (filteredItemCountUpcoming == totalItemCountUpcoming) && (filteredItemCountPassed == totalItemCountPassed) {
+            setNotFiltering()
+        } else if (filteredItemCountUpcoming == 0) && (filteredItemCountPassed == 0){
+            label.text = "No items match your query"
+            showFooter()
+        } else {
+            label.text = "Filtering upcoming \(filteredItemCountUpcoming) of \(totalItemCountUpcoming) - passed \(filteredItemCountPassed) of \(totalItemCountPassed)"
+            showFooter()
+        }
+    }
 }

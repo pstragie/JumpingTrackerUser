@@ -6,10 +6,16 @@
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <entity name="CoreCurrentUser" representedClassName="CurrentUser" syncable="YES" codeGenerationType="class">
+        <attribute name="eventAddressLine1" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="eventCountryCode" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="eventLocality" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="eventPostalCode" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="favHorses" optional="YES" attributeType="Transformable" syncable="YES"/>
         <attribute name="firstname" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="logo" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="mail" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="name" attributeType="String" syncable="YES"/>
+        <attribute name="organisationID" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="perHorses" optional="YES" attributeType="Transformable" syncable="YES"/>
         <attribute name="surname" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="uid" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
@@ -21,21 +27,33 @@
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <entity name="CoreEvents" representedClassName="Event" syncable="YES" codeGenerationType="class">
-        <attribute name="countrycode" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="date" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="eventtype" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="favorite" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="address_line1" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="address_line2" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="administrative_area" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="bodyformat" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="bodyprocessed" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="bodysummary" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="bodyvalue" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="country_code" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="date" attributeType="String" syncable="YES"/>
+        <attribute name="dependent_locality" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="eventtype" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="favorite" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="idnumber" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="level" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="level" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="locality" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="location" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="organisator" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="orguid" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="personal" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="registerwithJT" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
-        <attribute name="tid" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="logo_user_id" optional="YES" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="organisator" attributeType="String" syncable="YES"/>
+        <attribute name="organization" attributeType="String" syncable="YES"/>
+        <attribute name="orguid" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="personal" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="postal_code" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="poster" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="registerwithJT" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="sorting_code" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tid" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="title" attributeType="String" syncable="YES"/>
-        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="uuid" attributeType="String" syncable="YES"/>
     </entity>
     <entity name="CoreEventTypes" representedClassName="EventType" syncable="YES" codeGenerationType="class">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
@@ -85,9 +103,9 @@
     </entity>
     <elements>
         <element name="CoreCoatColors" positionX="-254" positionY="0" width="128" height="90"/>
-        <element name="CoreCurrentUser" positionX="-54" positionY="144" width="128" height="165"/>
+        <element name="CoreCurrentUser" positionX="-54" positionY="144" width="128" height="255"/>
         <element name="CoreDisciplines" positionX="-74" positionY="288" width="128" height="90"/>
-        <element name="CoreEvents" positionX="-245" positionY="234" width="128" height="270"/>
+        <element name="CoreEvents" positionX="-245" positionY="234" width="128" height="450"/>
         <element name="CoreEventTypes" positionX="142" positionY="198" width="128" height="90"/>
         <element name="CoreGender" positionX="142" positionY="99" width="128" height="90"/>
         <element name="CoreHorses" positionX="-54" positionY="-9" width="128" height="300"/>

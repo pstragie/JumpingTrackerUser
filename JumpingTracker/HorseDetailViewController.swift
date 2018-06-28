@@ -104,7 +104,7 @@ class HorseDetailViewController: UIViewController {
     func configureView() {
         if let detailHorse = detailHorse {
             if #available(iOS 11.0, *) {
-                navigationItem.largeTitleDisplayMode = .automatic
+                self.navigationItem.largeTitleDisplayMode = .never
             } else {
                 // Fallback on earlier versions
             }
@@ -116,7 +116,9 @@ class HorseDetailViewController: UIViewController {
                 rightBarButtonItems = []
             }
             navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
-
+            let logo = UIImage(named: "tab_horse_head_styled")
+            let imageView = UIImageView(image: logo!)
+            self.navigationItem.titleView = imageView
             print("Horse name: \(detailHorse)")
         }
     }
@@ -173,9 +175,11 @@ class HorseDetailViewController: UIViewController {
         return result!.value(forKey: key) as! String
     }
     
+    
     func setupLayout() {
         horseName.text = detailHorse?.name.first?.value
         if detailHorse?.studbook?.first != nil {
+            print("get acros")
             let idArray: Array<Int32> = (detailHorse?.studbook?.map { $0.id })!
             var acroArray: Array<String> = []
             if idArray.count > 0 {
@@ -191,11 +195,13 @@ class HorseDetailViewController: UIViewController {
             studbook.text = ""
         }
         if detailHorse?.father?.first != nil {
+            print("get father")
             fatherName.text = getName("CoreHorses", Int((detailHorse?.father?.first?.id)!), "name")
         } else {
             fatherName.text = "X"
         }
         if detailHorse?.mother?.first != nil {
+            print("get mother")
             motherName.text = getName("CoreHorses", Int((detailHorse?.mother?.first?.id)!), "name")
         } else {
             motherName.text = "X"
@@ -207,6 +213,7 @@ class HorseDetailViewController: UIViewController {
             heightName.text = String((detailHorse?.height?.first?.value)!)
         }
         if detailHorse?.birthday?.first != nil {
+            print("get birthday")
             birthName.text = getName("CoreJaartallen", Int((detailHorse?.birthday?.first?.id)!), "name")
         }
         if detailHorse?.studreg?.first != nil {
@@ -215,6 +222,7 @@ class HorseDetailViewController: UIViewController {
             studRegName.text = ""
         }
         if detailHorse?.coatcolor?.first != nil {
+            print("get coatcolor")
             coatColorName.text = getName("CoreCoatColors", Int((detailHorse?.coatcolor?.first?.id)!), "name")
         }
     }
