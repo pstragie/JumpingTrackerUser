@@ -300,10 +300,12 @@ class HorsesViewController: UIViewController {
             searchController.searchResultsUpdater = self
             searchController.obscuresBackgroundDuringPresentation = false
             searchController.searchBar.placeholder = "Search horses"
+            
             navigationItem.searchController = searchController // Add the searchbar to the navigationItem
         } else {
             // ???
         }
+        tableView.keyboardDismissMode = .interactive
         definesPresentationContext = true
     }
     

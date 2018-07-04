@@ -128,6 +128,15 @@ class HomeViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
         // Check if previously logged in
+        if self.userDefault.bool(forKey: "loginSuccessful") {
+            if isUserOrganisator() {
+                organisatorLabel.text = "Organisator"
+            } else {
+                organisatorLabel.text = "Equestrian"
+            }
+        } else {
+            organisatorLabel.text = ""
+        }
     }
     
     // MARK: - setup layout
@@ -150,11 +159,7 @@ class HomeViewController: UIViewController {
         jtView.addSubview(jumpingTrackerLabel)
         organisatorLabel = UILabel(frame: CGRect(x: 0, y: 50, width: 300, height: 31))
         organisatorLabel.isHidden = true
-        if isUserOrganisator() {
-            organisatorLabel.text = "Organisator"
-        } else {
-            organisatorLabel.text = "Equestrian"
-        }
+        
         organisatorLabel.font = UIFont.systemFont(ofSize: 24, weight: .semibold)
         organisatorLabel.layer.cornerRadius = 12
         organisatorLabel.layer.masksToBounds = true

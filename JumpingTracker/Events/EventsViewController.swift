@@ -740,26 +740,31 @@ class EventsViewController: UIViewController {
             let password = self.getPasswordFromKeychain(username!)
             let credentialData = "\(username!):\(password)".data(using: String.Encoding.utf8)!
             let base64Credentials = credentialData.base64EncodedString(options: [])
-            
-            // Prep parameters for flagging
-            let flag_name: String = "add_event_to_favorites"
-            let action: String = "flag"
-            let user_uid = self.userDefault.value(forKey: "UID") as! String
-            let entity_id: String = String(tid)
-            let parameters: [String: Any] = ["flag_id": [["target_id": flag_name, "target_type": action]], "entity_type": [["value": "node"]], "entity_id": [["value": entity_id]], "uid": [["target_id": Int(user_uid)]]]
             let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
-            
-            Alamofire.request("https://jumpingtracker.com/entity/flagging?_format=json", method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
-                .responseJSON { response in
-                    switch response.result {
-                    case .success:
-                        print("Success with adding favorite flag to event: \(String(describing: response.result.value))")
-                        self.resyncTapped()
-                        break
-                    case .failure(let error):
-                        print("Request failed with error: \(error)")
-                        break
-                    }
+            if !flagExists(urlString: "https://jumpingtracker.com/rest/export/json/flagging/\(tid)?_format=json", headers: headers) {
+                print("flag does not exist")
+                // Prep parameters for flagging
+                let flag_name: String = "add_event_to_favorites"
+                let action: String = "flag"
+                let user_uid = self.userDefault.value(forKey: "UID") as! String
+                let entity_id: String = String(tid)
+                let parameters: [String: Any] = ["flag_id": [["target_id": flag_name, "target_type": action]], "entity_type": [["value": "node"]], "entity_id": [["value": entity_id]], "uid": [["target_id": Int(user_uid)]]]
+                let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
+                
+                Alamofire.request("https://jumpingtracker.com/entity/flagging?_format=json", method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
+                    .responseJSON { response in
+                        switch response.result {
+                        case .success:
+                            print("Success with adding favorite flag to event: \(String(describing: response.result.value))")
+                            self.resyncTapped()
+                            break
+                        case .failure(let error):
+                            print("Request failed with error: \(error)")
+                            break
+                        }
+                }
+            } else {
+                print("Event already a favorite")
             }
         } else {
             print("No connection")
@@ -861,6 +866,41 @@ class EventsViewController: UIViewController {
         }
     }
     
+    func flagExists(urlString: String, headers: Dictionary<String, String>) -> Bool  {
+        print("Checking if Flagging ID exists...")
+        var result: Bool = false
+        Alamofire.request(urlString, method: .get, encoding: JSONEncoding.default, headers: headers)
+            .validate(statusCode: 200..<299)
+            .validate(contentType: ["application/json"])
+            .responseData { (response) in
+                switch(response.result) {
+                case .success:
+                    print("data: \(response.data!)")
+                    if response.result.value != nil {
+                        
+                        do {
+                            let flaggings = try JSONDecoder().decode([Flaggings].self, from: response.data!)
+                            print("response: \(String(describing: flaggings.first))")
+                            let flaggingID: Int = (flaggings.first?.id!.first?.value)!
+                            print("success: flaggingID = \(flaggingID)")
+                            print("event data decoded")
+                        } catch {
+                            print("Could not decode event data")
+                        }
+                    } else {
+                        print("response: \(String(describing: response.result.value))")
+                    }
+                    result = true
+                    break
+                case .failure(let error):
+                    print("Request to obtain favorite/personal events failed with error: \(error)")
+                    result = false
+                    break
+                }
+        
+        }
+        return result
+    }
     // Obtain events from favorite or personal
     func obtainPersonalEvents(list: String) {
         notLoggedInPopup.alpha = 0
@@ -871,7 +911,6 @@ class EventsViewController: UIViewController {
         if list == "favorite" {
             self.splitEvents = self.splitFavoriteEvents
             self.splitFilteredEvents = self.splitFilteredFavoriteEvents
-            print("filtering = \(isFiltering())")
         } else if list == "personal" {
             self.splitEvents = self.splitPersonalEvents
             self.splitFilteredEvents = self.splitFilteredPersonalEvents
@@ -897,15 +936,19 @@ class EventsViewController: UIViewController {
                         self.prepareSplitEventsArray(list)
                         if self.isFiltering() {
                             if list == "favorite" {
-                                print("update search splitFilteredFavoriteEvents: \(self.splitFilteredFavoriteEvents)")
                                 self.splitFilteredEvents = self.splitFilteredFavoriteEvents
                             } else if list == "personal" {
-                                print("update search splitFilteredPersonalEvents: \(self.splitFilteredPersonalEvents)")
                                 self.splitFilteredEvents = self.splitFilteredPersonalEvents
                             }
                             // Re-apply filtering!
                             self.updateSearchResults(for: self.searchController)
                             
+                        } else {
+                            if list == "favorite" {
+                                self.splitEvents = self.splitFavoriteEvents
+                            } else if list == "personal" {
+                                self.splitEvents = self.splitPersonalEvents
+                            }
                         }
                         DispatchQueue.main.async {
                             self.noFavoritesPopup.alpha = 0
@@ -960,22 +1003,19 @@ class EventsViewController: UIViewController {
             })
         }
         let reloadOperation = BlockOperation {
+            self.fetchFavoritesAndPersonalInBackground()
             DispatchQueue.main.async() {
                 self.tableView.reloadData()
             }
         }
         opQueue.addOperations([allEventsBlockOperation, reloadOperation], waitUntilFinished: true)
         //opQueue.addOperation(allEventsBlockOperation)
+        
     }
     
     func fetchFavoritesAndPersonalInBackground() {
-        var lists: Array<String> = []
-        if isUserOrganisator() {
-            lists = ["favorite", "personal"]
-        } else {
-            lists = ["favorite"]
-        }
-        for list in lists {
+        
+        for list in ["favorite"] {
             if userDefault.bool(forKey: "loginSuccessful") { // User needs to be logged in
                 let favoriteEventsBlockOperation = BlockOperation {
                     // No uid needed (internal function in Flag module!)
@@ -1479,49 +1519,18 @@ class EventsViewController: UIViewController {
 extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
         var numberofSections: Int = 0
-        var list: [String: [Events]]
-        if isUserOrganisator() {
-            if selected[0] {
-                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-            } else if selected[1] {
-                list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
-            } else {
-                list = isFiltering() ? splitFilteredEvents : splitEvents
-            }
-        } else {
-            if selected[0] {
-                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-            } else {
-                list = isFiltering() ? splitFilteredEvents : splitEvents
-            }
-        }
+        let list = isFiltering() ? splitFilteredEvents : splitEvents
         if (list["passed"]?.count)! > 0 {
             numberofSections += 1
         }
         if (list["upcoming"]?.count)! > 0 {
             numberofSections += 1
         }
-        
         return numberofSections
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        var list: [String: [Events]]
-        if isUserOrganisator() {
-            if selected[0] {
-                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-            } else if selected[1] {
-                list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
-            } else {
-                list = isFiltering() ? splitFilteredEvents : splitEvents
-            }
-        } else {
-            if selected[0] {
-                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-            } else {
-                list = isFiltering() ? splitFilteredEvents : splitEvents
-            }
-        }
+        let list = isFiltering() ? splitFilteredEvents : splitEvents
         switch (section) {
         case 0:
             if list["upcoming"]?.count == 0 {
@@ -1545,22 +1554,8 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
     }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        var list: [String: [Events]]
-        if isUserOrganisator() {
-            if selected[0] {
-                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-            } else if selected[1] {
-                list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
-            } else {
-                list = isFiltering() ? splitFilteredAllEvents : splitAllEvents
-            }
-        } else {
-            if selected[0] {
-                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-            } else {
-                list = isFiltering() ? splitFilteredAllEvents : splitAllEvents
-            }
-        }
+        let list = isFiltering() ? splitFilteredEvents : splitEvents
+        
         switch (section) {
         case 0:
             if list["upcoming"]!.count == 0 {
@@ -1645,7 +1640,11 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
         }
         let followLiveEvent = UITableViewRowAction(style: .default, title: liveEventTitle) { (action, indexPath) in
             // present live viewcontroller
+            let mainStoryboard = UIStoryboard(name: "Main", bundle: Bundle.main)
+            let vc: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: "LiveEvent") as! LiveEventHorseTableViewController
             
+            let navController = UINavigationController(rootViewController: vc)
+            self.present(navController, animated: true, completion: nil)
         }
         followLiveEvent.backgroundColor = UIColor.FlatColor.Yellow.Turbo
         
