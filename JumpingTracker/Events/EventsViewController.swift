@@ -34,7 +34,7 @@ class EventsViewController: UIViewController {
     
     var events: [Events] = []
     var filteredEvents: [Events] = []
-    var selected: Array<Bool> = [false, false, false]
+    var selected: Array<Bool> = []
     
     var disciplineDict: Dictionary<String, String> = [:]
     var originalCenter: CGPoint!
@@ -167,6 +167,11 @@ class EventsViewController: UIViewController {
     // MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        if isUserOrganisator() {
+            selected = [false, false, false]
+        } else {
+            selected = [false, false]
+        }
         print("view did load eventviewController")
         if let splitViewController = self.appDelegate.window?.rootViewController?.childViewControllers[1] as? UISplitViewController {
             let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count - 1] as! UINavigationController
@@ -193,13 +198,19 @@ class EventsViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
         print("view will layout subviews")
-        if selected[0] || selected[1] {
-            let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped)), UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(editTapped))]
-            navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
+        if isUserOrganisator() {
+            if selected[0] || selected[1] {
+                let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped)), UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(editTapped))]
+                navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
+            } else {
+                let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped))]
+                navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
+            }
         } else {
-            let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped))]
+            let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped))]
             navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
         }
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -214,19 +225,30 @@ class EventsViewController: UIViewController {
         addEventPopup.alpha = 0
         eventKeyPopup.alpha = 0
         self.tableView.isUserInteractionEnabled = true
-        if selected[0] {
-            favoriteEventsButtonClicked()
-        } else if selected[1] {
-            personalEventsButtonClicked()
-        } else if selected[2] {
-            allEventsButtonClicked()
+        if isUserOrganisator() {
+            if selected[0] {
+                favoriteEventsButtonClicked()
+            } else if selected[1] {
+                personalEventsButtonClicked()
+            } else if selected[2] {
+                allEventsButtonClicked()
+            } else {
+                // Synchronize with online event data
+                print("requestAnonymousEventData")
+                fetchEvents()
+            }
         } else {
-            // Synchronize with online event data
-            print("requestAnonymousEventData")
-            fetchEvents()
-
+            if selected[0] {
+                favoriteEventsButtonClicked()
+            } else if selected[1] {
+                allEventsButtonClicked()
+            } else {
+                // Synchronize with online event data
+                print("requestAnonymousEventData")
+                fetchEvents()
+                
+            }
         }
-        
     }
     
     
@@ -236,6 +258,9 @@ class EventsViewController: UIViewController {
     }
     // MARK: - setup Layout
     func setupLayout() {
+        if !isUserOrganisator() {
+            self.personalEventsButton.isHidden = true
+        }
         navigationItem.titleView?.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
         navigationItem.titleView?.tintColor = UIColor.FlatColor.Gray.IronGray
         
@@ -687,7 +712,27 @@ class EventsViewController: UIViewController {
         }
     }
     
-    // MARK: Add flagging to event
+    
+    // MARK: - Additional Functions
+    func isUserOrganisator() -> Bool {
+        let userID = self.userDefault.value(forKey: "UID") as? String
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreCurrentUser")
+        fetchRequest.predicate = NSPredicate(format: "organisationID == %@", userID!)
+        var user: [CurrentUser] = []
+        do {
+            user = try self.appDelegate.getContext().fetch(fetchRequest) as! [CurrentUser]
+        } catch {
+            print("Could not fetch user")
+        }
+        
+        if user.first?.organisationID != 0 {
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    // Add flagging to event
     func addFavoriteFlagging(tid: Int) {
         if ConnectionCheck.isConnectedToNetwork() {
             // Prep headers
@@ -720,7 +765,21 @@ class EventsViewController: UIViewController {
             print("No connection")
         }
     }
-    // MARK: Patch favorites to User
+    
+    // Cancel Event
+    func cancelEvent(tid: Int) {
+        if ConnectionCheck.isConnectedToNetwork() {
+            // TODO: create drupal field: "canceled"
+            // Patch cancel to server
+            // TODO: drupal do something with the canceled message! (Email followers?, Image on event?)
+            // TODO: Add image on row: Canceled (option to remove entirely?
+            print("Event successfully canceled")
+        } else {
+            print("Not connected to the internet")
+        }
+    }
+    
+    // Patch favorites to User
     func deleteFavoriteFlagging(tid: Int) {
         // Try to post only the event ID!!!
         if ConnectionCheck.isConnectedToNetwork() {
@@ -802,7 +861,7 @@ class EventsViewController: UIViewController {
         }
     }
     
-    // MARK: obtain events from favorite or personal
+    // Obtain events from favorite or personal
     func obtainPersonalEvents(list: String) {
         notLoggedInPopup.alpha = 0
         noFavoritesPopup.alpha = 0
@@ -874,7 +933,7 @@ class EventsViewController: UIViewController {
         }
     }
     
-    // MARK: Fetch all events
+    // Fetch all events
     func fetchEvents() {
         let allEventsBlockOperation = BlockOperation {
             self.requestEventData("https://jumpingtracker.com/rest/export/json/events?_format=json", completion: { result in
@@ -890,8 +949,8 @@ class EventsViewController: UIViewController {
                     self.syncLabel.isHidden = true
                     self.activityIndicator.isHidden = true
                     self.progressView.progress = 0.0
-                    if self.splitAllEvents.isEmpty {
-                        print("splitAllEvents is empty")
+                    if self.events.isEmpty {
+                        print("events is empty")
                         self.tableView.isHidden = true
                     } else {
                         print("events is not empty")
@@ -909,20 +968,46 @@ class EventsViewController: UIViewController {
         //opQueue.addOperation(allEventsBlockOperation)
     }
     
-    // MARK: search bar empty?
+    func fetchFavoritesAndPersonalInBackground() {
+        var lists: Array<String> = []
+        if isUserOrganisator() {
+            lists = ["favorite", "personal"]
+        } else {
+            lists = ["favorite"]
+        }
+        for list in lists {
+            if userDefault.bool(forKey: "loginSuccessful") { // User needs to be logged in
+                let favoriteEventsBlockOperation = BlockOperation {
+                    // No uid needed (internal function in Flag module!)
+                    self.requestPersonalEventData("https://jumpingtracker.com/rest/export/json/\(list)_events?_format=json", completion: { result in
+                        
+                        let eventdata: [Events] = result as [Events]
+                        if list == "favorite" {
+                            self.prepareSplitFavoriteEventsArray(eventdata, "favorite")
+                        } else if list == "personal" {
+                            self.prepareSplitFavoriteEventsArray(eventdata, "personal")
+                        }
+                    })
+                }
+                opQueue.addOperation(favoriteEventsBlockOperation)
+            }
+        }
+    }
+    
+    // search bar empty?
     func searchBarIsEmpty() -> Bool {
         // Returns true if the text is empty or nil
         return searchController.searchBar.text?.isEmpty ?? true
     }
     
-    // MARK: search is filtering?
+    // search is filtering?
     func isFiltering() -> Bool {
         let searchBarScopeIsFiltering = searchController.searchBar.selectedScopeButtonIndex != 0
         return searchController.isActive && (!searchBarIsEmpty() || searchBarScopeIsFiltering)
     }
     
     
-    // MARK: get name from tid
+    // get name from tid
     func getName(_ entity: String, _ tid: Int, _ key: String) -> String {
         var result: NSManagedObject?
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity)
@@ -936,7 +1021,7 @@ class EventsViewController: UIViewController {
         return result!.value(forKey: key) as! String
     }
     
-    // MARK: filter content for search text
+    // filter content for search text
     func filterContentForSearchText(_ searchText: String, scope: String = "All") {
         filteredEvents = events.filter({( event : Events) -> Bool in
             var newScope: String = ""
@@ -968,16 +1053,25 @@ class EventsViewController: UIViewController {
         prepareSplitEventsArray("personal")
         prepareSplitEventsArray("All")
 
-        if selected[0] {
-            self.splitFilteredEvents = self.splitFilteredFavoriteEvents
-        } else if selected [1] {
-            self.splitFilteredEvents = self.splitFilteredPersonalEvents
+        if isUserOrganisator() {
+            if selected[0] {
+                self.splitFilteredEvents = self.splitFilteredFavoriteEvents
+            } else if selected[1] {
+                self.splitFilteredEvents = self.splitFilteredPersonalEvents
+            } else {
+                self.splitFilteredEvents = self.splitFilteredAllEvents
+            }
         } else {
-            self.splitFilteredEvents = self.splitFilteredAllEvents
+            if selected[0] {
+                self.splitFilteredEvents = self.splitFilteredFavoriteEvents
+            } else {
+                self.splitFilteredEvents = self.splitFilteredAllEvents
+            }
         }
         self.tableView.reloadData()
     }
-    // MARK: Split events into passed and upcoming
+    
+    // Split events into passed and upcoming
     func prepareSplitEventsArray(_ button: String) {
         var passedEvents: Array<Events> = []
         var upcomingEvents: Array<Events> = []
@@ -1015,10 +1109,49 @@ class EventsViewController: UIViewController {
                 self.splitPersonalEvents["upcoming"] = upcomingEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) < (self.dateStringToDate($1.date[0].value)) })
             }
         }
+        if isFiltering() {
+            self.splitFilteredEvents["passed"] = passedEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) > (self.dateStringToDate($1.date[0].value)) })
+            self.splitFilteredEvents["upcoming"] = upcomingEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) < (self.dateStringToDate($1.date[0].value)) })
+        } else {
+            self.splitEvents["passed"] = passedEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) > (self.dateStringToDate($1.date[0].value)) })
+            self.splitEvents["upcoming"] = upcomingEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) < (self.dateStringToDate($1.date[0].value)) })
+        }
+        
+    }
+    
+    // Split events into passed and upcoming
+    func prepareSplitFavoriteEventsArray(_ list: [Events], _ button: String) {
+        var passedEvents: Array<Events> = []
+        var upcomingEvents: Array<Events> = []
+        for event in list {
+            if self.datepassed(event.date[0].value) {
+                passedEvents.append(event)
+            } else {
+                upcomingEvents.append(event)
+            }
+        }
+        
+        if button == "favorite" {
+            if isFiltering() {
+                self.splitFilteredFavoriteEvents["passed"] = passedEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) > (self.dateStringToDate($1.date[0].value)) })
+                self.splitFilteredFavoriteEvents["upcoming"] = upcomingEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) < (self.dateStringToDate($1.date[0].value)) })
+            } else {
+                self.splitFavoriteEvents["passed"] = passedEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) > (self.dateStringToDate($1.date[0].value)) })
+                self.splitFavoriteEvents["upcoming"] = upcomingEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) < (self.dateStringToDate($1.date[0].value)) })
+            }
+        } else if button == "personal" {
+            if isFiltering() {
+                self.splitFilteredPersonalEvents["passed"] = passedEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) > (self.dateStringToDate($1.date[0].value)) })
+                self.splitFilteredPersonalEvents["upcoming"] = upcomingEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) < (self.dateStringToDate($1.date[0].value)) })
+            } else {
+                self.splitPersonalEvents["passed"] = passedEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) > (self.dateStringToDate($1.date[0].value)) })
+                self.splitPersonalEvents["upcoming"] = upcomingEvents.sorted(by: { (self.dateStringToDate($0.date[0].value)) < (self.dateStringToDate($1.date[0].value)) })
+            }
+        }
     }
     
     // MARK: - Supplementary functions
-    // MARK: enable verify button when fields are filled
+    // enable verify button when fields are filled
     func setupAddTargetIsNotEmptyTextFields() {
         eventKeyVerifyButton.isEnabled = false
         passphraseEventField.addTarget(self, action: #selector(textFieldIsNotEmpty), for: .editingChanged)
@@ -1033,16 +1166,20 @@ class EventsViewController: UIViewController {
     }
     
     
-    // MARK: update progress view
+    // update progress view
     func updateProgress(progress: Float) {
         print("progress: \(progress)")
         progressView.progress = progress
     }
     
     
-    // MARK: favorites button tapped
+    // favorites button tapped
     func favoriteEventsButtonClicked() {
-        selected = [true, false, false]
+        if isUserOrganisator() {
+            selected = [true, false, false]
+        } else {
+            selected = [true, false]
+        }
         allEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
         favoriteEventsButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
         personalEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
@@ -1051,9 +1188,9 @@ class EventsViewController: UIViewController {
     
     
     
-    // MARK: personal button tapped
+    // personal button tapped
     func personalEventsButtonClicked() {
-        selected = [false, true, false]
+        selected = [false, true, false] // Can only be clicked if user is organisator
         allEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
         favoriteEventsButton.backgroundColor = UIColor.FlatColor.Blue.CuriousBlue
         personalEventsButton.backgroundColor = UIColor.FlatColor.Blue.PictonBlue
@@ -1061,7 +1198,7 @@ class EventsViewController: UIViewController {
     }
     
 
-    // MARK: all button tapped
+    // all button tapped
     func allEventsButtonClicked() {
         print("allEventsButtonClicked")
         noFavoritesPopup.alpha = 0
@@ -1082,7 +1219,7 @@ class EventsViewController: UIViewController {
     
     
     
-    // MARK: get password from keychain
+    // get password from keychain
     func getPasswordFromKeychain(_ account: String) -> String {
         do {
             let passwordItem = KeychainPasswordItem(service: KeychainConfiguration.serviceName,
@@ -1097,7 +1234,7 @@ class EventsViewController: UIViewController {
         }
     }
     
-    // MARK: sanitize data from json
+    // sanitize data from json
     func sanitizeDateFromJson(_ dateString: String) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.calendar = Calendar(identifier: .iso8601)
@@ -1110,7 +1247,8 @@ class EventsViewController: UIViewController {
             return ""
         }
     }
-    // MARK: date string to date format
+    
+    // date string to date format
     func dateStringToDate(_ dateString: String) -> Date {
         let dateFormatter = DateFormatter()
         dateFormatter.calendar = Calendar(identifier: .iso8601)
@@ -1124,7 +1262,7 @@ class EventsViewController: UIViewController {
         
     }
     
-    // MARK: - date passed boolean
+    // date passed boolean
     func datepassed(_ dateString: String) -> Bool {
         if dateStringToDate(dateString) < Date() {
             return true
@@ -1132,7 +1270,7 @@ class EventsViewController: UIViewController {
             return false
         }
     }
-    // MARK: sanitize time from json
+    // sanitize time from json
     func sanitizeHourFromJson(_ dateString: String) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.calendar = Calendar(identifier: .iso8601)
@@ -1146,7 +1284,7 @@ class EventsViewController: UIViewController {
         }
     }
     
-    // MARK: convert ID to name
+    // convert ID to name
     func convertIDtoName(idArray: Array<String>, dict: Dictionary<String, String>) -> String {
         var newArray: Array<String> = []
         var newString: String = ""
@@ -1161,8 +1299,8 @@ class EventsViewController: UIViewController {
         return newString
     }
     
-    // MARK: - Popup views
-    // MARK: show no results
+    // Popup views
+    // show no results
     func showNoResults(title: String, message: String) {
         tableView.isHidden = true
         tableView.isUserInteractionEnabled = false
@@ -1178,7 +1316,7 @@ class EventsViewController: UIViewController {
         noFavoritesPopup.alpha = 1
     }
     
-    // MARK: not logged in
+    // not logged in
     func showNotLoggedInMessage(_ message: String) {
         tableView.isHidden = true
         tableView.isUserInteractionEnabled = false
@@ -1192,7 +1330,6 @@ class EventsViewController: UIViewController {
             
         }
         notLoggedInPopup.alpha = 1
-        //tableView.isUserInteractionEnabled = true
     }
     
 
@@ -1218,12 +1355,20 @@ class EventsViewController: UIViewController {
         eventKeyPopup.alpha = 0
         addEventPopup.alpha = 0
         // Synchronize events
-        if selected[0] {
-            favoriteEvents(favoriteEventsButton)
-        } else if selected[1] {
-            personalEvents(personalEventsButton)
+        if isUserOrganisator() {
+            if selected[0] {
+                favoriteEvents(favoriteEventsButton)
+            } else if selected[1] {
+                personalEvents(personalEventsButton)
+            } else {
+                allEvents(allEventsButton)
+            }
         } else {
-            allEvents(allEventsButton)
+            if selected[0] {
+                favoriteEvents(favoriteEventsButton)
+            } else {
+                allEvents(allEventsButton)
+            }
         }
     }
     
@@ -1293,6 +1438,7 @@ class EventsViewController: UIViewController {
             self.addEventPopup.alpha = 1.0
         }, completion: nil)
     }
+    
     // MARK: - prepare segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "segueToEventDetail" {
@@ -1334,12 +1480,20 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
         var numberofSections: Int = 0
         var list: [String: [Events]]
-        if selected[0] {
-            list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-        } else if selected[1] {
-            list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
+        if isUserOrganisator() {
+            if selected[0] {
+                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
+            } else if selected[1] {
+                list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
+            } else {
+                list = isFiltering() ? splitFilteredEvents : splitEvents
+            }
         } else {
-            list = isFiltering() ? splitFilteredEvents : splitEvents
+            if selected[0] {
+                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
+            } else {
+                list = isFiltering() ? splitFilteredEvents : splitEvents
+            }
         }
         if (list["passed"]?.count)! > 0 {
             numberofSections += 1
@@ -1347,17 +1501,26 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
         if (list["upcoming"]?.count)! > 0 {
             numberofSections += 1
         }
+        
         return numberofSections
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         var list: [String: [Events]]
-        if selected[0] {
-            list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-        } else if selected[1] {
-            list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
+        if isUserOrganisator() {
+            if selected[0] {
+                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
+            } else if selected[1] {
+                list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
+            } else {
+                list = isFiltering() ? splitFilteredEvents : splitEvents
+            }
         } else {
-            list = isFiltering() ? splitFilteredEvents : splitEvents
+            if selected[0] {
+                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
+            } else {
+                list = isFiltering() ? splitFilteredEvents : splitEvents
+            }
         }
         switch (section) {
         case 0:
@@ -1383,12 +1546,20 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         var list: [String: [Events]]
-        if selected[0] {
-            list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-        } else if selected[1] {
-            list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
+        if isUserOrganisator() {
+            if selected[0] {
+                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
+            } else if selected[1] {
+                list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
+            } else {
+                list = isFiltering() ? splitFilteredAllEvents : splitAllEvents
+            }
         } else {
-            list = isFiltering() ? splitFilteredAllEvents : splitAllEvents
+            if selected[0] {
+                list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
+            } else {
+                list = isFiltering() ? splitFilteredAllEvents : splitAllEvents
+            }
         }
         switch (section) {
         case 0:
@@ -1407,15 +1578,11 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
         }
         print("reload tableview")
         var event: Events
-        var list: [String: [Events]]
-        if selected[0] {
-            list = isFiltering() ? splitFilteredFavoriteEvents : splitFavoriteEvents
-        } else if selected[1] {
-            list = isFiltering() ? splitFilteredPersonalEvents : splitPersonalEvents
-        } else {
-            list = isFiltering() ? splitFilteredAllEvents : splitAllEvents
+        let list = isFiltering() ? splitFilteredEvents : splitEvents
+        
+        if (splitFavoriteEvents["upcoming"]?.contains(where: { $0.tid.first?.value == list["upcoming"]?.first?.tid.first?.value }))! || (splitFavoriteEvents["passed"]?.contains(where: { $0.tid.first?.value == list["passed"]?.first?.tid.first?.value }))! {
+            cell.layer.borderColor = UIColor.FlatColor.Green.Fern.cgColor
         }
-        print("Used list for table: \(list)")
         cell.selectionStyle = .gray
         cell.layer.cornerRadius = 0
         cell.layer.masksToBounds = true
@@ -1448,8 +1615,14 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
-        if selected[0] || selected[1] {
-            return .delete
+        if isUserOrganisator() {
+            if selected[0] || selected[1] {
+                return .delete
+            }
+        } else {
+            if selected[0] {
+                return .delete
+            }
         }
         return .none
         
@@ -1464,6 +1637,18 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         // MARK: Add to Favorites
+        var liveEventTitle: String = ""
+        if isUserOrganisator() && String((self.events[indexPath.row].orguid.first?.id)!) == self.userDefault.value(forKey: "UID") as! String {
+            liveEventTitle = "Setup or stream event"
+        } else {
+            liveEventTitle = "Live!"
+        }
+        let followLiveEvent = UITableViewRowAction(style: .default, title: liveEventTitle) { (action, indexPath) in
+            // present live viewcontroller
+            
+        }
+        followLiveEvent.backgroundColor = UIColor.FlatColor.Yellow.Turbo
+        
         let addToFavorites = UITableViewRowAction(style: .normal, title: "Favorite") { (action, indexPath) in
             // Fetch Event
             switch (indexPath.section) {
@@ -1488,6 +1673,10 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
         }
         addToFavorites.backgroundColor = UIColor(red: 125/255, green: 0/255, blue:0/255, alpha:1)
         
+        let isAlreadyFavorite = UITableViewRowAction(style: .normal, title: "Is already favorite") { (action, indexPath) in
+            // Do nothing
+        }
+        isAlreadyFavorite.backgroundColor = UIColor.FlatColor.Green.ChateauGreen
         let deleteFromFavorite = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
             // Fetch Event
             print("deleteFromFavorite")
@@ -1513,7 +1702,7 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         
-        let deleteFromPersonal = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
+        let deleteFromPersonal = UITableViewRowAction(style: .default, title: "Cancel event") { (action, indexPath) in
             // Fetch Event
             switch (indexPath.section) {
             case 0:
@@ -1526,7 +1715,7 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
                 let tid: Int = list![indexPath.row].tid.first!.value
                 list!.remove(at: indexPath.row)
                 self.tableView.deleteRows(at: [indexPath], with: .fade)
-                self.deleteFavoriteFlagging(tid: Int(tid))
+                self.cancelEvent(tid: Int(tid))
             default:
                 // Quickly remove from tableview
                 //print("list of events before deleting: \(self.events.map { $0.tid })")
@@ -1534,16 +1723,75 @@ extension EventsViewController: UITableViewDelegate, UITableViewDataSource {
                 let tid: Int = list![indexPath.row].tid.first!.value
                 list!.remove(at: indexPath.row)
                 self.tableView.deleteRows(at: [indexPath], with: .fade)
-                self.deleteFavoriteFlagging(tid: Int(tid))
+                self.cancelEvent(tid: Int(tid))
             }
         }
         // Show when favorites or personal are not selected
         if selected[0] {
+            let list = self.isFiltering() ? self.splitFilteredEvents : self.splitEvents
+            if dateStringToDate((list["upcoming"]?.first?.date.first?.value)!) == Date() {
+                return [followLiveEvent, deleteFromFavorite]
+            } else {
+                if String((list["upcoming"]?.first?.orguid.first?.id)!) == self.userDefault.value(forKey: "UID") as! String {
+                    return [followLiveEvent, deleteFromFavorite]
+                }
+            }
             return [deleteFromFavorite]
-        } else if selected[1] {
-            return [deleteFromPersonal]
+        } else if selected[1] && isUserOrganisator() {
+            return [followLiveEvent, deleteFromPersonal]
         } else {
-            return [addToFavorites]
+            let list = self.isFiltering() ? self.splitFilteredEvents : self.splitEvents
+            var selectedTid: Int?
+            if indexPath.section == 0 {
+                if list["upcoming"]?.count != 0 {
+                    selectedTid = (list["upcoming"]![indexPath.row].tid.first?.value)!
+                } else {
+                    selectedTid = (list["passed"]![indexPath.row].tid.first?.value)!
+                }
+            } else {
+                selectedTid = (list["passed"]![indexPath.row].tid.first?.value)!
+            }
+            if isFiltering() {
+                if (splitFilteredFavoriteEvents["upcoming"]?.contains(where: { $0.tid.first?.value == selectedTid }))! || (splitFilteredFavoriteEvents["passed"]?.contains(where: { $0.tid.first?.value == selectedTid }))! {
+                    if dateStringToDate((list["upcoming"]?.first?.date.first?.value)!) == Date() {
+                        return [followLiveEvent]
+                    } else {
+                        if String((list["upcoming"]?.first?.orguid.first?.id)!) == self.userDefault.value(forKey: "UID") as! String {
+                            return [followLiveEvent]
+                        }
+                    }
+                    return [isAlreadyFavorite]
+                } else {
+                    if dateStringToDate((list["upcoming"]?.first?.date.first?.value)!) == Date() {
+                        return [addToFavorites, followLiveEvent]
+                    } else {
+                        if String((list["upcoming"]?.first?.orguid.first?.id)!) == self.userDefault.value(forKey: "UID") as! String {
+                            return [addToFavorites, followLiveEvent]
+                        }
+                    }
+                    return [addToFavorites]
+                }
+            } else {
+                if (splitFavoriteEvents["upcoming"]?.contains(where: { $0.tid.first?.value == selectedTid }))! || (splitFavoriteEvents["passed"]?.contains(where: { $0.tid.first?.value == selectedTid }))! {
+                    if dateStringToDate((list["upcoming"]?.first?.date.first?.value)!) == Date() {
+                        return [followLiveEvent]
+                    } else {
+                        if String((list["upcoming"]?.first?.orguid.first?.id)!) == self.userDefault.value(forKey: "UID") as! String {
+                            return [followLiveEvent]
+                        }
+                    }
+                    return [isAlreadyFavorite]
+                } else {
+                    if dateStringToDate((list["upcoming"]?.first?.date.first?.value)!) == Date() {
+                        return [addToFavorites, followLiveEvent]
+                    } else {
+                        if String((list["upcoming"]?.first?.orguid.first?.id)!) == self.userDefault.value(forKey: "UID") as! String {
+                            return [addToFavorites, followLiveEvent]
+                        }
+                    }
+                    return [addToFavorites]
+                }
+            }
         }
     }
 }
@@ -1558,7 +1806,7 @@ extension EventsViewController: UISearchResultsUpdating {
         if isFiltering() {
             if selected[0] {
                 searchFooter.setIsFilteringEventsToShow(filteredItemCountUpcoming: splitFilteredFavoriteEvents["upcoming"]!.count, of: splitFavoriteEvents["upcoming"]!.count, filteredItemCountPassed: splitFilteredFavoriteEvents["passed"]!.count, of: splitFavoriteEvents["passed"]!.count)
-            } else if selected[1] {
+            } else if selected[1] && isUserOrganisator() {
                 searchFooter.setIsFilteringEventsToShow(filteredItemCountUpcoming: splitFilteredPersonalEvents["upcoming"]!.count, of: splitPersonalEvents["upcoming"]!.count, filteredItemCountPassed: splitFilteredPersonalEvents["passed"]!.count, of: splitPersonalEvents["passed"]!.count)
             } else {
                 searchFooter.setIsFilteringEventsToShow(filteredItemCountUpcoming: splitFilteredEvents["upcoming"]!.count, of: splitEvents["upcoming"]!.count, filteredItemCountPassed: splitFilteredEvents["passed"]!.count, of: splitEvents["passed"]!.count)

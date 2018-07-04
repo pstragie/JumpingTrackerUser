@@ -1,5 +1,5 @@
 //
-//  LiveEventsViewController.swift
+//  LiveEventScoreViewController.swift
 //  JumpingTracker
 //
 //  Created by Pieter Stragier on 31/05/2018.
@@ -8,8 +8,16 @@
 
 import UIKit
 
-class LiveEventsViewController: UIViewController {
+class LiveEventScoreViewController: UIViewController {
 
+    // MARK: - variables
+    var detailHorse: Horses? {
+        didSet {
+            configureView()
+        }
+    }
+    
+    // MARK: - Live cycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -21,7 +29,11 @@ class LiveEventsViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-
+    // MARK: - Setup layout
+    func configureView() {
+        
+    }
+    
     /*
     // MARK: - Navigation
 

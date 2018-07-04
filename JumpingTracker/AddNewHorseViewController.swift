@@ -186,14 +186,14 @@ class AddNewHorseViewController: UIViewController {
         return result!.value(forKey: key) as! String
     }
     func configureView() {
-        if let detailHorse = detailHorse {
+        if detailHorse != nil {
             if #available(iOS 11.0, *) {
                 navigationItem.largeTitleDisplayMode = .never
             } else {
                 // Fallback on earlier versions
             }
             
-            print("Horse name: \(detailHorse)")
+            //print("Horse name: \(detailHorse)")
         }
     }
 

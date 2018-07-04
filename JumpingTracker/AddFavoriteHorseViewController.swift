@@ -15,7 +15,7 @@ class AddFavoriteHorseViewController: UIViewController {
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     let userDefault = UserDefaults.standard
     var category: String?
-    let horsedata: [Horses] = []
+    var horsedata: [Horses] = []
     var horses = [Horses]()
     var filteredHorses = [Horses]()
     var selectedHorse: Horses?
@@ -120,31 +120,11 @@ class AddFavoriteHorseViewController: UIViewController {
     func isFiltering() -> Bool {
         return !searchBarIsEmpty()
     }
-    // MARK: - Fetch request from Core Data
-    func requestFromCoreData(_ searchText: String) -> [Horses] {
-        let context = appDelegate.persistentContainer.viewContext
-        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "CoreHorses")
-        var horsedata: [Horses] = []
-        if isFiltering() {
-            request.predicate = NSPredicate(format: "name CONTAINS[c] %@", searchText)
-        }
-        request.returnsObjectsAsFaults = false
-        
-        do {
-            let result = try context.fetch(request)
-            for data in result as! [Horses] {
-                
-                horsedata.append(data)
-            }
-        } catch {
-            print("Failed")
-        }
-        return horsedata
-    }
+
     
     // MARK: filter content for search text
     func filterContentForSearchText(_ searchText: String) {
-        horses = requestFromCoreData(searchText)
+        horses = horsedata
         filteredHorses = horses.sorted { ($0.name.first?.value)! < ($1.name.first?.value)! }
         selectedHorse = filteredHorses.first
         pickerView.reloadAllComponents()

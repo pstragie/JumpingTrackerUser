@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		144E5C057E0A8B26AB60B713 /* libPods-JumpingTracker.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A44C3FA37843284B49D4756 /* libPods-JumpingTracker.a */; };
+		B602C64520EC4FF00034EC34 /* LiveEventTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B602C64420EC4FF00034EC34 /* LiveEventTableCell.swift */; };
+		B602C64B20EC53890034EC34 /* LiveEventHorseTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B602C64A20EC53880034EC34 /* LiveEventHorseTableViewController.swift */; };
 		B60393A820D70EC40020D73B /* EventDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60393A720D70EC40020D73B /* EventDetailViewController.swift */; };
 		B60E66D920C36F28008901C1 /* UserMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66D820C36F27008901C1 /* UserMode.swift */; };
 		B60E66DB20C47978008901C1 /* DisciplineMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60E66DA20C47978008901C1 /* DisciplineMode.swift */; };
@@ -34,7 +36,7 @@
 		B68EE2FE20BF6165008C2FC5 /* HorsesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */; };
 		B68EE30020BF64AB008C2FC5 /* HorseTableCells.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */; };
 		B68EE30220C02AC1008C2FC5 /* YearMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30120C02AC1008C2FC5 /* YearMode.swift */; };
-		B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */; };
+		B68EE30420C04F60008C2FC5 /* LiveEventScoreViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30320C04F60008C2FC5 /* LiveEventScoreViewController.swift */; };
 		B68EE30820C20C6A008C2FC5 /* Snippets in Resources */ = {isa = PBXBuildFile; fileRef = B68EE30720C20C6A008C2FC5 /* Snippets */; };
 		B68EE30A20C34C6E008C2FC5 /* KeychainPasswordItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EE30920C34C6E008C2FC5 /* KeychainPasswordItem.swift */; };
 		B698860B20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */; };
@@ -48,6 +50,8 @@
 /* Begin PBXFileReference section */
 		2A44C3FA37843284B49D4756 /* libPods-JumpingTracker.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-JumpingTracker.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		72394C6F6C6DAF05D8EDF212 /* Pods-JumpingTracker.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JumpingTracker.debug.xcconfig"; path = "Pods/Target Support Files/Pods-JumpingTracker/Pods-JumpingTracker.debug.xcconfig"; sourceTree = "<group>"; };
+		B602C64420EC4FF00034EC34 /* LiveEventTableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventTableCell.swift; sourceTree = "<group>"; };
+		B602C64A20EC53880034EC34 /* LiveEventHorseTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiveEventHorseTableViewController.swift; path = "/Users/pstragier/Documents/PWS/Apps iOS/JumpingTrackerEquestrian/JumpingTracker App/JumpingTracker/JumpingTracker/Live/LiveEventHorseTableViewController.swift"; sourceTree = "<absolute>"; };
 		B60393A720D70EC40020D73B /* EventDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetailViewController.swift; sourceTree = "<group>"; };
 		B60E66D820C36F27008901C1 /* UserMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserMode.swift; sourceTree = "<group>"; };
 		B60E66DA20C47978008901C1 /* DisciplineMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisciplineMode.swift; sourceTree = "<group>"; };
@@ -76,7 +80,7 @@
 		B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorsesViewController.swift; sourceTree = "<group>"; };
 		B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorseTableCells.swift; sourceTree = "<group>"; };
 		B68EE30120C02AC1008C2FC5 /* YearMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearMode.swift; sourceTree = "<group>"; };
-		B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventsViewController.swift; sourceTree = "<group>"; };
+		B68EE30320C04F60008C2FC5 /* LiveEventScoreViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventScoreViewController.swift; sourceTree = "<group>"; };
 		B68EE30720C20C6A008C2FC5 /* Snippets */ = {isa = PBXFileReference; lastKnownFileType = text; path = Snippets; sourceTree = "<group>"; };
 		B68EE30920C34C6E008C2FC5 /* KeychainPasswordItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainPasswordItem.swift; sourceTree = "<group>"; };
 		B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFavoriteHorseViewController.swift; sourceTree = "<group>"; };
@@ -117,6 +121,28 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		B602C64620EC4FFF0034EC34 /* Live */ = {
+			isa = PBXGroup;
+			children = (
+				B602C64A20EC53880034EC34 /* LiveEventHorseTableViewController.swift */,
+				B68EE30320C04F60008C2FC5 /* LiveEventScoreViewController.swift */,
+				B602C64420EC4FF00034EC34 /* LiveEventTableCell.swift */,
+			);
+			path = Live;
+			sourceTree = "<group>";
+		};
+		B602C64920EC527C0034EC34 /* Horses */ = {
+			isa = PBXGroup;
+			children = (
+				B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */,
+				B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */,
+				B6788AB020CDE32800E054BA /* AddNewHorseViewController.swift */,
+				B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */,
+				B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */,
+			);
+			name = Horses;
+			sourceTree = "<group>";
+		};
 		B60E66DC20C479C6008901C1 /* Mode Files */ = {
 			isa = PBXGroup;
 			children = (
@@ -136,18 +162,6 @@
 				B6AD324A20D090C300C29912 /* GenderMode.swift */,
 			);
 			path = "Mode Files";
-			sourceTree = "<group>";
-		};
-		B68DF51320D9ADDE00C5F5F5 /* Horses */ = {
-			isa = PBXGroup;
-			children = (
-				B68EE2FD20BF6165008C2FC5 /* HorsesViewController.swift */,
-				B60E66E120C60E94008901C1 /* HorseDetailViewController.swift */,
-				B6788AB020CDE32800E054BA /* AddNewHorseViewController.swift */,
-				B698860A20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift */,
-				B68EE2FF20BF64AB008C2FC5 /* HorseTableCells.swift */,
-			);
-			name = Horses;
 			sourceTree = "<group>";
 		};
 		B68DF51420D9AE1100C5F5F5 /* Events */ = {
@@ -198,8 +212,8 @@
 				B68EE2D720BD5B0B008C2FC5 /* AppDelegate.swift */,
 				B68EE2D920BD5B0B008C2FC5 /* HomeViewController.swift */,
 				B68DF51420D9AE1100C5F5F5 /* Events */,
-				B68DF51320D9ADDE00C5F5F5 /* Horses */,
-				B68EE30320C04F60008C2FC5 /* LiveEventsViewController.swift */,
+				B602C64920EC527C0034EC34 /* Horses */,
+				B602C64620EC4FFF0034EC34 /* Live */,
 				B68EE2DD20BD5B0C008C2FC5 /* Main.storyboard */,
 				B68DF51520D9AE5400C5F5F5 /* Supplementary */,
 				B68EE2E020BD5B22008C2FC5 /* Assets.xcassets */,
@@ -318,7 +332,7 @@
 				B60E66E220C60E94008901C1 /* HorseDetailViewController.swift in Sources */,
 				B6AD324B20D090C300C29912 /* GenderMode.swift in Sources */,
 				B68EE30220C02AC1008C2FC5 /* YearMode.swift in Sources */,
-				B68EE30420C04F60008C2FC5 /* LiveEventsViewController.swift in Sources */,
+				B68EE30420C04F60008C2FC5 /* LiveEventScoreViewController.swift in Sources */,
 				B68EE2F420BD6E7F008C2FC5 /* EventMode.swift in Sources */,
 				B68EE2DC20BD5B0B008C2FC5 /* EventsViewController.swift in Sources */,
 				B68EE30A20C34C6E008C2FC5 /* KeychainPasswordItem.swift in Sources */,
@@ -337,9 +351,11 @@
 				B68DF51220D83D7A00C5F5F5 /* AddNewEventViewController.swift in Sources */,
 				B60393A820D70EC40020D73B /* EventDetailViewController.swift in Sources */,
 				B63FE76020DA8C08006F7A57 /* OrganisatorMode.swift in Sources */,
+				B602C64520EC4FF00034EC34 /* LiveEventTableCell.swift in Sources */,
 				B60E66D920C36F28008901C1 /* UserMode.swift in Sources */,
 				B68EE2DA20BD5B0B008C2FC5 /* HomeViewController.swift in Sources */,
 				B6AD326F20D15F3B00C29912 /* EventTypeMode.swift in Sources */,
+				B602C64B20EC53890034EC34 /* LiveEventHorseTableViewController.swift in Sources */,
 				B698860B20CB3D07002AFFC1 /* AddFavoriteHorseViewController.swift in Sources */,
 				B68EE2FA20BF5B37008C2FC5 /* HorseMode.swift in Sources */,
 				B63FE76220DBD7E8006F7A57 /* FlaggingMode.swift in Sources */,

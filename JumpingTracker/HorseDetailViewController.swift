@@ -11,9 +11,12 @@ import CoreData
 
 class HorseDetailViewController: UIViewController {
 
+    // MARK: - Variables
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     let userDefault = UserDefaults.standard
     var horseEditing: Bool = false
+    var father: [Horses] = []
+    var mother: [Horses] = []
     var detailHorse: Horses? {
         didSet {
             configureView()
@@ -22,6 +25,7 @@ class HorseDetailViewController: UIViewController {
 
     var idField: String = ""
     
+    // MARK: - Outlets
     @IBOutlet weak var popupView: UIView!
     @IBOutlet weak var cancelButton: UIButton!
     @IBOutlet weak var okButton: UIButton!
@@ -45,9 +49,26 @@ class HorseDetailViewController: UIViewController {
     @IBOutlet weak var coatColorName: UILabel!
     @IBOutlet weak var horseImage: UIImageView!
     @IBOutlet weak var genderImage: UIImageView!
+    @IBOutlet weak var idVerifiedButton: UIButton!
+    @IBAction func IDverified(_ sender: UIButton) {
+        //performSegue(withIdentifier: "segueToEditHorse", sender: self)
+        /*
+        // Upon verification -> Go to AddNewHorseViewController with filled fields
+        let storyboardSegue = UIStoryboardSegue(identifier: "segueToAddNewHorse", source: HorseDetailViewController(), destination: AddNewHorseViewController())
+        
+        prepare(for: storyboardSegue, sender: okButton)
+        
+         let mainStoryboard = UIStoryboard(name: "Main", bundle: Bundle.main)
+         let vc: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: "AddNewHorse") as! AddNewHorseViewController
+         let navController = UINavigationController(rootViewController: vc)
+         self.present(navController, animated: true, completion: nil)
+         */
+    }
+    @IBAction func unwindSegueCancel(_ sender: UIStoryboardSegue) {
+        // Do nothing
+    }
     
-    
-    
+    // MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         adjustLargeTitleSize()
@@ -65,6 +86,67 @@ class HorseDetailViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         popup.alpha = 0.0
+    }
+    
+    // MARK: - Layout
+    func setupLayout() {
+        horseName.text = detailHorse?.name.first?.value
+        if detailHorse?.studbook?.first != nil {
+            print("get acros")
+            let idArray: Array<Int32> = (detailHorse?.studbook?.map { $0.id })!
+            var acroArray: Array<String> = []
+            if idArray.count > 0 {
+                for id in idArray {
+                    let acroString = getName("CoreStudbooks", Int(id), "acro")
+                    acroArray.append(acroString)
+                }
+            } else {
+                acroArray = [""]
+            }
+            studbook.text = acroArray.joined(separator: ", ")
+        } else {
+            studbook.text = ""
+        }
+        if father.first != nil {
+            print("get father")
+            fatherName.text = father.first?.name.first?.value
+        } else {
+            fatherName.text = "X"
+        }
+        if mother.first != nil {
+            print("get mother")
+            motherName.text = mother.first?.name.first?.value
+        } else {
+            motherName.text = "X"
+        }
+        if detailHorse?.owner?.first != nil {
+            ownerName.text = detailHorse?.owner?.first?.owner
+        } else {
+            ownerName.text = ""
+        }
+        if detailHorse?.height?.first != nil {
+            heightName.text = String((detailHorse?.height?.first?.value)!)
+        } else {
+            heightName.text = ""
+        }
+        
+        if detailHorse?.birthday?.first != nil {
+            print("get birthday")
+            birthName.text = getName("CoreJaartallen", Int((detailHorse?.birthday?.first?.id)!), "name")
+        } else {
+            birthName.text = ""
+        }
+        if detailHorse?.studreg?.first != nil {
+            studRegName.text = detailHorse?.studreg?.first?.value
+        } else {
+            studRegName.text = ""
+        }
+        if detailHorse?.coatcolor?.first != nil {
+            print("get coatcolor")
+            coatColorName.text = getName("CoreCoatColors", Int((detailHorse?.coatcolor?.first?.id)!), "name")
+        } else {
+            coatColorName.text = ""
+        }
     }
     
     func setupPopupView() {
@@ -123,15 +205,14 @@ class HorseDetailViewController: UIViewController {
         }
     }
 
+    // MARK: - objc functions
     @objc func verifyID() {
         self.idField = self.idTextField.text!
         if idIsCorrect(id: self.idField) {
             self.view.endEditing(true)
             self.horseEditing = true
-            // Upon verification -> Go to AddNewHorseViewController with filled fields
-            let storyboardSegue = UIStoryboardSegue(identifier: "AddNewHorse", source: HorseDetailViewController(), destination: AddNewHorseViewController())
-            prepare(for: storyboardSegue, sender: okButton)
             popup.alpha = 0.0
+            performSegue(withIdentifier: "segueToEditHorse", sender: self)
         } else {
             popup.shake()
         }
@@ -153,6 +234,41 @@ class HorseDetailViewController: UIViewController {
         })
     }
 
+    @objc func saveTapped() {
+        if horseEditing {
+            if AddNewHorseViewController().verifyRequiredFields() {
+                let storyboardSegue: UIStoryboardSegue = UIStoryboardSegue(identifier: "horseDetail", source: AddNewHorseViewController(), destination: HorseDetailViewController())
+                unwind(for: storyboardSegue, towardsViewController: HorseDetailViewController())
+                // Patch changes to server
+                print("patch to server")
+            } else {
+                print("Not all required fields have content")
+            }
+        } else {
+            if AddNewHorseViewController().requiredFields {
+                // Post new horse to server
+                print("post to server")
+            } else {
+                print("Not all required fields for new horse are filled.")
+            }
+        }
+    }
+    @objc func textFieldIsNotEmpty(sender: UITextField) {
+        sender.text = sender.text?.trimmingCharacters(in: .whitespaces)
+        
+        guard
+            let idnumber = idTextField.text, !idnumber.isEmpty
+            else
+        {
+            self.okButton.isEnabled = false
+            self.okButton.alpha = 0.5
+            return
+        }
+        okButton.isEnabled = true
+        okButton.alpha = 1.0
+    }
+    
+    // MARK: - Additional functions
     func idIsCorrect(id: String) -> Bool {
         // fetch horse id
         let idnumber = detailHorse?.idnumber
@@ -176,66 +292,20 @@ class HorseDetailViewController: UIViewController {
     }
     
     
-    func setupLayout() {
-        horseName.text = detailHorse?.name.first?.value
-        if detailHorse?.studbook?.first != nil {
-            print("get acros")
-            let idArray: Array<Int32> = (detailHorse?.studbook?.map { $0.id })!
-            var acroArray: Array<String> = []
-            if idArray.count > 0 {
-                for id in idArray {
-                    let acroString = getName("CoreStudbooks", Int(id), "acro")
-                    acroArray.append(acroString)
-                }
-            } else {
-                acroArray = [""]
-            }
-            studbook.text = acroArray.joined(separator: ", ")
-        } else {
-            studbook.text = ""
-        }
-        if detailHorse?.father?.first != nil {
-            print("get father")
-            fatherName.text = getName("CoreHorses", Int((detailHorse?.father?.first?.id)!), "name")
-        } else {
-            fatherName.text = "X"
-        }
-        if detailHorse?.mother?.first != nil {
-            print("get mother")
-            motherName.text = getName("CoreHorses", Int((detailHorse?.mother?.first?.id)!), "name")
-        } else {
-            motherName.text = "X"
-        }
-        if detailHorse?.owner?.first != nil {
-            ownerName.text = detailHorse?.owner?.first?.owner
-        }
-        if detailHorse?.height?.first != nil {
-            heightName.text = String((detailHorse?.height?.first?.value)!)
-        }
-        if detailHorse?.birthday?.first != nil {
-            print("get birthday")
-            birthName.text = getName("CoreJaartallen", Int((detailHorse?.birthday?.first?.id)!), "name")
-        }
-        if detailHorse?.studreg?.first != nil {
-            studRegName.text = detailHorse?.studreg?.first?.value
-        } else {
-            studRegName.text = ""
-        }
-        if detailHorse?.coatcolor?.first != nil {
-            print("get coatcolor")
-            coatColorName.text = getName("CoreCoatColors", Int((detailHorse?.coatcolor?.first?.id)!), "name")
-        }
-    }
+    
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        print("prepare for 'Edit Horse Details'")
+        print("segue identifier = \(String(describing: segue.identifier))")
         switch segue.identifier {
-        case "segueToEdit":
+        case "segueToEditHorse":
+            navigationItem.title = "Cancel"
             let controller = (segue.destination as! UINavigationController).topViewController as! AddNewHorseViewController
             let horse = detailHorse
             controller.detailHorse = horse
             controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
             controller.navigationItem.leftItemsSupplementBackButton = true
-            controller.navigationController?.title = "Edit horse details"
+            controller.title = "Edit horse details"
             let rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveTapped))]
             controller.navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
             break
@@ -246,42 +316,11 @@ class HorseDetailViewController: UIViewController {
     }
  
     
-    @objc func saveTapped() {
-        if horseEditing {
-            if AddNewHorseViewController().verifyRequiredFields() {
-                let storyboardSegue: UIStoryboardSegue = UIStoryboardSegue(identifier: "horseDetail", source: AddNewHorseViewController(), destination: HorseDetailViewController())
-                unwind(for: storyboardSegue, towardsViewController: HorseDetailViewController())
-                // Patch changes to server
-                print("patch to server")
-            } else {
-                print("Not all required fields have content")
-            }
-        } else {
-            if AddNewHorseViewController().requiredFields {
-                // Post new horse to server
-                print("post to server")
-            } else {
-                print("Not all required fields for new horse are filled.")
-            }
-        }
-        // Update coreHorses
-    }
-    @objc func textFieldIsNotEmpty(sender: UITextField) {
-        sender.text = sender.text?.trimmingCharacters(in: .whitespaces)
-        
-        guard
-            let idnumber = idTextField.text, !idnumber.isEmpty
-            else
-        {
-            self.okButton.isEnabled = false
-            self.okButton.alpha = 0.5
-            return
-        }
-        okButton.isEnabled = true
-        okButton.alpha = 1.0
-    }
+    
+    
 }
 
+// MARK: - Extensions
 extension HorseDetailViewController {
     func adjustLargeTitleSize() {
         guard let title = title, #available(iOS 11.0, *) else { return }

@@ -148,8 +148,10 @@ extension CurrentUser {
                         perArray?.append(pery)
                     }
                 }
-                let organisation: [User.Organisation] =  [User.Organisation(orgid: Int(self.organisationID))]
-                
+                var organisation: [User.Organisation] = []
+                if self.organisationID != 0 {
+                    organisation =  [User.Organisation(orgid: Int(self.organisationID))]
+                }
                 var logo: [User.Logo] = []
                 if self.logo != nil {
                     logo = [User.Logo(url: self.logo!)]

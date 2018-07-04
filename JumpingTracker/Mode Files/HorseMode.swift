@@ -138,7 +138,7 @@ struct Horses: Codable {
     }
     
     struct Father: Codable {
-        var id: Int32
+        var id: Int
         var type: String
         var uuid: String
         var url: String
@@ -151,7 +151,7 @@ struct Horses: Codable {
     }
     
     struct Mother: Codable {
-        var id: Int32
+        var id: Int
         var type: String
         var uuid: String
         var url: String
@@ -166,7 +166,7 @@ struct Horses: Codable {
         var value: Int
     }
     struct Gender: Codable {
-        var id: Int32
+        var id: Int
         var type: String
         var uuid: String
         var url: String
@@ -229,9 +229,9 @@ extension Horse {
             let idnumber = Horses.IDNumber(value: self.identification!)
             let owner = Horses.Owner(owner: self.owner ?? "")
             
-            let father = Horses.Father(id: self.father , type: "taxonomy_term", uuid: "\(convertTid("CoreHorses", Int(self.father), "uuid"))", url: "/taxonomy/term/\(self.father)")
-            let mother = Horses.Mother(id: self.father, type: "taxonomy_term", uuid: "\(convertTid("CoreHorses", Int(self.mother), "uuid"))", url: "/taxonomy/term/\(self.mother)")
-            let gender = Horses.Gender(id: self.gender, type: "taxonomy_term", uuid: "\(convertTid("CoreGender", Int(self.gender), "uuid"))", url: "/taxonomy/term/\(self.gender)")
+            let father = Horses.Father(id: Int(self.father) , type: "taxonomy_term", uuid: "\(convertTid("CoreHorses", Int(self.father), "uuid"))", url: "/taxonomy/term/\(self.father)")
+            let mother = Horses.Mother(id: Int(self.father), type: "taxonomy_term", uuid: "\(convertTid("CoreHorses", Int(self.mother), "uuid"))", url: "/taxonomy/term/\(self.mother)")
+            let gender = Horses.Gender(id: Int(self.gender), type: "taxonomy_term", uuid: "\(convertTid("CoreGender", Int(self.gender), "uuid"))", url: "/taxonomy/term/\(self.gender)")
             let birthDay = Horses.Birthday(id: self.birthday, type: "taxonomy_term", uuid: "\(convertTid("CoreJaartallen", Int(self.birthday), "uuid"))", url: "/taxonomy/term/\(self.birthday)")
             let height = Horses.Height(value: Int(self.height))
             let deceased = Horses.Deceased(value: self.deceased)

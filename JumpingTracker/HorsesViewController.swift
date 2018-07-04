@@ -92,6 +92,7 @@ class HorsesViewController: UIViewController {
     }
     @IBAction func addHorseButtonPopupTapped(_ sender: UIButton) {
         // navigate to addHorseViewController
+        print("addHorseButtonPopupTapped")
     }
     @IBAction func addHorsePopupCancelButtonTapped(_ sender: UIButton) {
         // hide popup
@@ -117,13 +118,22 @@ class HorsesViewController: UIViewController {
     
     // MARK: - Outlet functions
     @IBAction func allHorses(_ sender: UIButton) {
+        self.tableView.isUserInteractionEnabled = true
+        let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped))]
+        navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
         allHorsesButtonClicked()
     }
     @IBAction func favoriteHorses(_ sender: UIButton) {
+        self.tableView.isUserInteractionEnabled = true
+        let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped)), UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(editTapped))]
+        navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
         favoriteHorsesButtonClicked()
     }
     
     @IBAction func personalHorses(_ sender: UIButton) {
+        self.tableView.isUserInteractionEnabled = true
+        let rightBarButtonItems = [UIBarButtonItem(title: "Sync", style: .plain, target: self, action: #selector(resyncTapped)), UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped)), UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(editTapped))]
+        navigationItem.setRightBarButtonItems(rightBarButtonItems, animated: true)
         personalHorsesButtonClicked()
     }
     
@@ -168,6 +178,11 @@ class HorsesViewController: UIViewController {
         }
     }
     
+    @IBAction func favPopupAddButtonTapped(_ sender: UIButton) {
+        navigationItem.title = "Select horse"
+    }
+    
+    
     // MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -202,6 +217,7 @@ class HorsesViewController: UIViewController {
         }
     }
     override func viewWillAppear(_ animated: Bool) {
+        print("view Will Appear")
         if splitViewController!.isCollapsed {
             if let selectionIndexPath = self.tableView.indexPathForSelectedRow {
                 self.tableView.deselectRow(at: selectionIndexPath, animated: animated)
@@ -221,7 +237,7 @@ class HorsesViewController: UIViewController {
             // Synchronize with online horse data
             print("requestAnonymousHorseData")
             fetchHorses()
-            
+            fetchFavoritesAndPersonalInBackground()
         }
         
     }
@@ -683,7 +699,12 @@ class HorsesViewController: UIViewController {
         }
     }
     
-    // MARK: Add flagging to horse
+    // MARK: Change personal flagging horse
+    func personalFlagging(tid: Int, flag: Bool) {
+        print("No function for personal flagging written yet")
+    }
+    
+    // MARK: Change favorite flagging horse
     func addFavoriteFlagging(tid: Int) {
         if ConnectionCheck.isConnectedToNetwork() {
             // Prep headers
@@ -697,7 +718,7 @@ class HorsesViewController: UIViewController {
             let action: String = "flag"
             let user_uid = self.userDefault.value(forKey: "UID") as! String
             let entity_id: String = String(tid)
-            let parameters: [String: Any] = ["flag_id": [["target_id": flag_name, "target_type": action]], "entity_type": [["value": "node"]], "entity_id": [["value": entity_id]], "uid": [["target_id": Int(user_uid)]]]
+            let parameters: [String: Any] = ["flag_id": [["target_id": flag_name, "target_type": action]], "entity_type": [["value": "taxonomy_term"]], "entity_id": [["value": entity_id]], "uid": [["target_id": Int(user_uid)]]]
             let headers = ["Authorization": "Basic \(base64Credentials)", "Accept": "application/json", "Content-Type": "application/json", "Cache-Control": "no-cache"]
             
             Alamofire.request("https://jumpingtracker.com/entity/flagging?_format=json", method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
@@ -716,7 +737,7 @@ class HorsesViewController: UIViewController {
             print("No connection")
         }
     }
-    // MARK: Patch favorites to User
+    // MARK: Delete flag from horse
     func deleteFavoriteFlagging(tid: Int) {
         // Try to post only the horse ID!!!
         if ConnectionCheck.isConnectedToNetwork() {
@@ -817,7 +838,7 @@ class HorsesViewController: UIViewController {
         if userDefault.bool(forKey: "loginSuccessful") { // User needs to be logged in
             let favoriteHorseBlockOperation = BlockOperation {
                 // No uid needed (internal function in Flag module!)
-                self.requestPersonalHorseData("https://jumpingtracker.com/rest/export/json/\(list)_horses2?_format=json", completion: { result in
+                self.requestPersonalHorseData("https://jumpingtracker.com/rest/export/json/\(list)_horses?_format=json", completion: { result in
                     
                     let horsedata: [Horses] = result as [Horses]
                     self.horses = horsedata
@@ -917,6 +938,29 @@ class HorsesViewController: UIViewController {
         }
         opQueue.addOperations([allHorsesBlockOperation, reloadOperation], waitUntilFinished: true)
         //opQueue.addOperation(allHorsesBlockOperation)
+    }
+    
+    // MARK: - fetch favorite and personal horses in the background to fill the lists.
+    func fetchFavoritesAndPersonalInBackground() {
+        for list in ["favorite", "personal"] {
+            if userDefault.bool(forKey: "loginSuccessful") { // User needs to be logged in
+                let favoriteHorseBlockOperation = BlockOperation {
+                    // No uid needed (internal function in Flag module!)
+                    self.requestPersonalHorseData("https://jumpingtracker.com/rest/export/json/\(list)_horses?_format=json", completion: { result in
+                        
+                        let horsedata: [Horses] = result as [Horses]
+                        if list == "favorite" {
+                            self.favoriteHorses = horsedata
+                        } else if list == "personal" {
+                            self.personalHorses = horsedata
+                        }
+                        
+                        
+                    })
+                }
+                opQueue.addOperation(favoriteHorseBlockOperation)
+            }
+        }
     }
     
     // MARK: search bar empty?
@@ -1154,7 +1198,6 @@ class HorsesViewController: UIViewController {
             
         }
         notLoggedInPopup.alpha = 1
-        //tableView.isUserInteractionEnabled = true
     }
     
     
@@ -1269,11 +1312,18 @@ class HorsesViewController: UIViewController {
                     list = isFiltering() ? filteredHorses : horses
                 }
                 horse = list[indexPath.row]
+                var father: [Horses] = []
                 if horse.father != nil {
-                    let father = list.filter { $0.tid == Int(horse.father?.first?.id)! }
+                    father = list.filter { $0.tid.first?.value == horse.father?.first?.id }
+                }
+                var mother: [Horses] = []
+                if horse.mother != nil {
+                    mother = list.filter { $0.tid.first?.value == horse.mother?.first?.id }
                 }
                 let controller = (segue.destination as! UINavigationController).topViewController as! HorseDetailViewController
                 controller.detailHorse = horse
+                controller.father = father
+                controller.mother = mother
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true
                 if #available(iOS 11.0, *) {
@@ -1285,6 +1335,20 @@ class HorsesViewController: UIViewController {
                 }
                 controller.navigationItem.title = horse.name.first?.value
             }
+        } else if segue.identifier == "segueToAddFavorite" {
+            print("segueToAddFavorite")
+            let controller = (segue.destination as! UINavigationController).topViewController as! AddFavoriteHorseViewController
+            controller.horsedata = horses
+            controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
+            controller.navigationItem.leftItemsSupplementBackButton = true
+            if #available(iOS 11.0, *) {
+                controller.navigationController?.navigationBar.prefersLargeTitles = false
+                controller.navigationItem.largeTitleDisplayMode = .never
+                controller.navigationController?.navigationItem.largeTitleDisplayMode = .never
+            } else {
+                // Fallback on earlier versions
+            }
+            
         }
     }
 }
@@ -1360,19 +1424,27 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         
     }
     
+    /*
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
+            print("editingSyle = delete")
+            var list = [favoriteHorses, personalHorses, horses][selected.index(where: { $0 == true })!]
+            list.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .left)
             
         }
         
     }
-    
+    */
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         // MARK: Add to Favorites
         let addToFavorites = UITableViewRowAction(style: .normal, title: "Favorite") { (action, indexPath) in
             // Fetch Horse
             let list = self.isFiltering() ? self.filteredHorses : self.horses
             let tid: Int = (list[indexPath.row].tid.first?.value)!
+            // Add to quicklist
+            self.favoriteHorses.append(list.filter( { $0.tid.first?.value == tid })[0])
+            // Add to server
             self.addFavoriteFlagging(tid: Int(tid)) // OperationQueue
             let cell = tableView.cellForRow(at: indexPath)
             UIView.animate(withDuration: 1, delay: 0.0, options: [.curveEaseIn], animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.6).cgColor}, completion: {_ in UIView.animate(withDuration: 0.1, animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.0).cgColor; self.tableView.reloadRows(at: [indexPath], with: .none)}) }
@@ -1384,10 +1456,9 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         // TODO: Add identification popup!
         let addToPersonals = UITableViewRowAction(style: .normal, title: "Personal") { (action, indexPath) in
             // Fetch Horse
-            let list = self.isFiltering() ? self.filteredHorses : self.horses
-            let tid: Int = (list[indexPath.row].tid.first?.value)!
-            self.addFavoriteFlagging(tid: Int(tid)) // OperationQueue
-            // Adjust in Core Data
+            //let list = self.isFiltering() ? self.filteredHorses : self.horses
+            //let tid: Int = (list[indexPath.row].tid.first?.value)!
+            //TO DO: self.addPersonalFlagging(tid: Int(tid)) // OperationQueue
             let cell = tableView.cellForRow(at: indexPath)
             UIView.animate(withDuration: 1, delay: 0.0, options: [.curveEaseIn], animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.6).cgColor}, completion: {_ in UIView.animate(withDuration: 0.1, animations: {cell?.layer.backgroundColor = UIColor.green.withAlphaComponent(0.0).cgColor; self.tableView.reloadRows(at: [indexPath], with: .none)}) }
             )
@@ -1395,18 +1466,39 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         addToPersonals.backgroundColor = UIColor(red: 85/255, green: 0/255, blue:0/255, alpha:1)
         
         let deleteFromFavorite = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
+            print("deleteFromFavorite: \(action), \(indexPath)")
             // Fetch Horse
-            let list = self.isFiltering() ? self.filteredFavoriteHorses : self.favoriteHorses
+            var list = self.isFiltering() ? self.filteredHorses : self.horses
+            print("list count = \(list.count)")
             let tid: Int = (list[indexPath.row].tid.first?.value)!
-            self.addFavoriteFlagging(tid: Int(tid)) // OperationQueue
-            self.tableView.deleteRows(at: [indexPath], with: .fade)
+            // Adjust favorites on server
+            self.deleteFavoriteFlagging(tid: Int(tid)) // OperationQueue
+            // tableView list remove horse
+            if self.isFiltering() {
+                self.filteredHorses.remove(at: indexPath.row)
+                if self.filteredFavoriteHorses.contains(where: {$0.tid.first?.value == tid }) {
+                    self.filteredFavoriteHorses.remove(at: self.filteredFavoriteHorses.index(where: { $0.tid.first?.value == tid })!)
+                }
+            } else {
+                self.horses.remove(at: indexPath.row)
+                if self.favoriteHorses.contains(where: { $0.tid.first?.value == tid }) {
+                    self.favoriteHorses.remove(at: self.favoriteHorses.index(where: { $0.tid.first?.value == tid })!)
+                }
+            }
+            // Quickly remove row from table
+            self.tableView.deleteRows(at: [indexPath], with: .left)
         }
         let deleteFromPersonal = UITableViewRowAction(style: .default, title: "Remove") { (action, indexPath) in
             // Fetch Horse
-            let list = self.isFiltering() ? self.filteredPersonalHorses : self.personalHorses
+            let list = self.isFiltering() ? self.filteredHorses : self.horses
             let tid: Int = (list[indexPath.row].tid.first?.value)!
-            self.addFavoriteFlagging(tid: Int(tid)) // OperationQueue
-            self.tableView.deleteRows(at: [indexPath], with: .fade)
+            self.personalFlagging(tid: Int(tid), flag: false) // OperationQueue
+            if self.isFiltering() {
+                self.filteredHorses.remove(at: indexPath.row)
+            } else {
+                self.horses.remove(at: indexPath.row)
+            }
+            self.tableView.deleteRows(at: [indexPath], with: .left)
         }
         // Show when favorites or personal are not selected
         if selected[0] {
@@ -1414,7 +1506,19 @@ extension HorsesViewController: UITableViewDelegate, UITableViewDataSource {
         } else if selected[1] {
             return [deleteFromPersonal]
         } else {
+            let list = self.isFiltering() ? self.filteredHorses : self.horses
+            let selectedTid: Int = (list[indexPath.row].tid.first?.value)!
+            let favList = self.favoriteHorses
+            let perList = self.personalHorses
+            if favList.contains(where: { $0.tid.first?.value == selectedTid }) && !perList.contains(where: { $0.tid.first?.value == selectedTid }) {
+                return [addToPersonals]
+            } else if !favList.contains(where: { $0.tid.first?.value == selectedTid }) && perList.contains(where: { $0.tid.first?.value == selectedTid }) {
+                return [addToFavorites]
+            } else if favList.contains(where: { $0.tid.first?.value == selectedTid }) && perList.contains(where: { $0.tid.first?.value == selectedTid }) {
+                return []
+            }
             return [addToPersonals, addToFavorites]
+            
         }
     }
 }
@@ -1427,13 +1531,7 @@ extension HorsesViewController: UISearchResultsUpdating {
         let scope = searchBar.scopeButtonTitles![searchBar.selectedScopeButtonIndex]
         filterContentForSearchText(searchController.searchBar.text!, scope: scope)
         if isFiltering() {
-            if selected[0] {
-                searchFooter.setIsFilteringToShow(filteredItemCount: filteredFavoriteHorses.count, of: favoriteHorses.count)
-            } else if selected[1] {
-                searchFooter.setIsFilteringToShow(filteredItemCount: filteredPersonalHorses.count, of: personalHorses.count)
-            } else {
-                searchFooter.setIsFilteringToShow(filteredItemCount: filteredHorses.count, of: horses.count)
-            }
+            searchFooter.setIsFilteringToShow(filteredItemCount: filteredHorses.count, of: horses.count)
         } else {
             searchFooter.setNotFiltering()
         }
